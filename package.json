@@ -1,6 +1,6 @@
 {
-  "name": "pomodoro-kanban",
-  "version": "1.0.5",
+  "name": "pomokanban",
+  "version": "1.0.0",
   "description": "Pomodoro enhanced Kanban plugin with integrated Pomodoro timers, automatic breaks/rounds, and per‑card time logging.",
   "main": "main.js",
   "scripts": {
@@ -17,7 +17,7 @@
   },
   "keywords": [],
   "author": "ahhhh2016",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "devDependencies": {
     "@codemirror/commands": "^6.0.0",
     "@codemirror/state": "^6.0.0",

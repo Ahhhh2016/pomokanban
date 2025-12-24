@@ -1,8 +1,8 @@
 {
-	"id": "pomodoro-kanban",
-	"name": "Pomodoro Kanban",
-	"version": "1.0.5",
-	"minAppVersion": "1.0.5",
+	"id": "pomokanban",
+	"name": "Pomokanban",
+	"version": "1.0.0",
+	"minAppVersion": "1.0.0",
 	"description": "Pomodoro enhanced Kanban plugin with integrated Pomodoro timers, automatic breaks/rounds, and per‑card time logging.",
 	"author": "ahhhh2016",
 	"authorUrl": "https://github.com/Ahhhh2016",

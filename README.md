@@ -1,6 +1,6 @@
-# Pomodoro Kanban Plugin
+# Pomokanban Plugin
 
-Create markdown-backed Kanban boards in [Obsidian](https://obsidian.md/) with integrated Pomodoro timer functionality.
+Pomodoro enhanced Kanban plugin in [Obsidian](https://obsidian.md/) with integrated Pomodoro timers, automatic breaks/rounds, and per‑card time logging.
 
 ## Features
 
@@ -135,4 +135,4 @@ I am grateful to the original author and contributors for their work on the base
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the GPL-3.0 License - see the [LICENSE.md](LICENSE.md) file for details.
