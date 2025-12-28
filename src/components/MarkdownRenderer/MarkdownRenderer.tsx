@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import classcat from 'classcat';
 import Mark from 'mark.js';
-import moment from 'moment';
+import { moment } from 'obsidian';
 import { Component, MarkdownRenderer as ObsidianRenderer, getLinkpath } from 'obsidian';
-import { CSSProperties, memo, useEffect, useRef } from 'preact/compat';
+import { memo, useEffect, useRef } from 'preact/compat';
+import { JSX } from 'preact';
 import { useContext } from 'preact/hooks';
 import { KanbanView } from 'src/KanbanView';
 import { DndManagerContext, EntityManagerContext } from 'src/dnd/components/context';
@@ -344,7 +345,7 @@ export const MarkdownRenderer = memo(function MarkdownPreviewRenderer({
     }
   }, []);
 
-  let styles: CSSProperties | undefined = undefined;
+  let styles: JSX.CSSProperties | undefined = undefined;
   if (!renderer.current && view.previewCache.has(entityId)) {
     const preview = view.previewCache.get(entityId);
     if (preview.lastRefHeight > 0) {
@@ -374,7 +375,7 @@ export const MarkdownClonedPreviewRenderer = memo(function MarkdownClonedPreview
   const elRef = useRef<HTMLDivElement>();
   const preview = view.previewCache.get(entityId);
 
-  let styles: CSSProperties | undefined = undefined;
+  let styles: JSX.CSSProperties | undefined = undefined;
   if (preview && preview.lastRefHeight > 0) {
     styles = {
       width: `${preview.lastRefWidth}px`,

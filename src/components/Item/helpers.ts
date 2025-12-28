@@ -581,9 +581,11 @@ async function handleElectronPaste(stateManager: StateManager, win: Window & typ
           // Wait for Obsidian to update
           await new Promise((resolve) => win.setTimeout(resolve, 50));
 
-          const newFile = stateManager.app.vault.getAbstractFileByPath(path) as TFile;
-
-          return linkTo(stateManager, newFile, stateManager.file.path);
+          const abstractFile = stateManager.app.vault.getAbstractFileByPath(path);
+          if (abstractFile instanceof TFile) {
+            return linkTo(stateManager, abstractFile, stateManager.file.path);
+          }
+          return null;
         } else {
           const splitFile = file.originalName.split('.');
           const ext = splitFile.pop();

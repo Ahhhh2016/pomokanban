@@ -1,6 +1,5 @@
 import EventEmitter from 'eventemitter3';
-import { Notice, Plugin, TFile } from 'obsidian';
-import moment from 'moment';
+import { Notice, Plugin, TFile, moment } from 'obsidian';
 import update from 'immutability-helper';
 import { StopReasonModal } from './components/StopReasonModal';
 import { t } from './lang/helpers';
@@ -120,8 +119,8 @@ export class TimerManager {
     if (path) {
       try {
         const file = this.plugin.app.vault.getAbstractFileByPath(path);
-        if (file) {
-          src = this.plugin.app.vault.getResourcePath(file as TFile);
+        if (file instanceof TFile) {
+          src = this.plugin.app.vault.getResourcePath(file);
         }
       } catch (err) {
         console.error('Unable to resolve audio file path', err);
@@ -131,10 +130,10 @@ export class TimerManager {
     // Fallback to built-in asset inside this vault's plugin folder
     if (!src) {
       try {
-        const pluginAssetPath = '.obsidian/plugins/pomodoro-kanban/assets/sound.wav';
+        const pluginAssetPath = `${this.plugin.app.vault.configDir}/plugins/pomodoro-kanban/assets/sound.wav`;
         const file = this.plugin.app.vault.getAbstractFileByPath(pluginAssetPath);
-        if (file) {
-          src = this.plugin.app.vault.getResourcePath(file as TFile);
+        if (file instanceof TFile) {
+          src = this.plugin.app.vault.getResourcePath(file);
         }
       } catch (err) {
         console.error('Unable to resolve built-in sound asset', err);

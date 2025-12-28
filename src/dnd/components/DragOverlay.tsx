@@ -1,5 +1,5 @@
 import { JSX } from 'preact';
-import { CSSProperties, createPortal, useContext, useEffect, useState } from 'preact/compat';
+import { createPortal, useContext, useEffect, useState } from 'preact/compat';
 
 import { DragEventData } from '../managers/DragManager';
 import { Coordinates, Entity, Hitbox } from '../types';
@@ -18,7 +18,7 @@ function getDragOverlayStyles(
   margin: Hitbox,
   transition?: string,
   transform?: string
-): CSSProperties {
+): JSX.CSSProperties {
   const adjustedHitbox = [
     originHitbox[0] - margin[0],
     originHitbox[1] - margin[1],
@@ -42,7 +42,7 @@ export function DragOverlay({ children }: DragOverlayProps) {
   const dndManager = useContext(DndManagerContext);
 
   const [dragEntity, setDragEntity] = useState<Entity | undefined>();
-  const [styles, setStyles] = useState<CSSProperties | undefined>();
+  const [styles, setStyles] = useState<JSX.CSSProperties | undefined>();
 
   useEffect(() => {
     if (!dndManager) return;

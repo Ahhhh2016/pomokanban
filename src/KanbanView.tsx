@@ -572,8 +572,10 @@ export class KanbanView extends TextFileView implements HoverParent {
         }
       }
 
-      // Reset content
-      btn.innerHTML = '';
+      // Reset content without using innerHTML
+      while (btn.firstChild) {
+        btn.removeChild(btn.firstChild);
+      }
 
       // Inject custom icon before time:
       // - not running => timer_play
@@ -582,19 +584,21 @@ export class KanbanView extends TextFileView implements HoverParent {
       // - running + mode break => rest
       const HOURGLASS_PAUSE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M452-160ZM160-80v-80h80v-120q0-61 28.5-114.5T348-480q-51-32-79.5-85.5T240-680v-120h-80v-80h640v80h-80v120q0 48-18 92t-51 77q-38 10-71 29t-60 47q-10-2-19.5-3.5T480-440q-66 0-113 47t-47 113v120h132q7 22 16.5 42T491-80H160Zm320-440q66 0 113-47t47-113v-120H320v120q0 66 47 113t113 47Zm270 360h40v-160h-40v160Zm-100 0h40v-160h-40v160Zm70 120q-83 0-141.5-58.5T520-240q0-83 58.5-141.5T720-440q83 0 141.5 58.5T920-240q0 83-58.5 141.5T720-40ZM480-800Z"/></svg>';
       const TIMER_PAUSE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M360-840v-80h240v80H360ZM480-80q-74 0-139.5-28.5T226-186q-49-49-77.5-114.5T120-440q0-74 28.5-139.5T226-694q49-49 114.5-77.5T480-800q62 0 119 20t107 58l56-56 56 56-56 56q38 50 58 107t20 119q0 74-28.5 139.5T734-186q-49 49-114.5 77.5T480-80Zm0-80q116 0 198-82t82-198q0-116-82-198t-198-82q-116 0-198 82t-82 198q0 116 82 198t198 82Zm0-280ZM360-280h80v-320h-80v320Zm160 0h80v-320h-80v320Z"/></svg>';
-      const REST_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M160-120v-80h640v80H160Zm160-160q-66 0-113-47t-47-113v-400h640q33 0 56.5 23.5T880-760v120q0 33-23.5 56.5T800-560h-80v120q0 66-47 113t-113 47H320Zm0-480h320-400 80Zm400 120h80v-120h-80v120ZM560-360q33 0 56.5-23.5T640-440v-320H400v16l72 58q2 2 8 16v170q0 8-6 14t-14 6H300q-8 0-14-6t-6-14v-170q0-2 8-16l72-58v-16H240v320q0 33 23.5 56.5T320-360h240ZM360-760h40-40Z"/></svg>';
+      const REST_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M160-120v-80h640v80H160Zm160-160q-66 0-113-47t-47-113v-400h640q33 0 56.5 23.5T880-760v120q0 33-23.5 56.5T800-560h-80v120q0 66-47 113t-113 47H320Zm0-480h320-400 80Zm400 120h80v-120h-80v120ZM560-360q33 0 56.5-23.5T640-440v-320H400v16l72 58q2 2 8 16v170q0 8-6 14t-14 6_H300q-8 0-14-6t-6-14v-170q0-2 8-16l72-58v-16H240v320q0 33 23.5 56.5T320-360h240ZM360-760h40-40Z"/></svg>';
       const TIMER_PLAY_SVG = '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="currentColor"><path d="M360-840v-80h240v80H360ZM480-80q-74 0-139.5-28.5T226-186q-49-49-77.5-114.5T120-440q0-74 28.5-139.5T226-694q49-49 114.5-77.5T480-800q62 0 119 20t107 58l56-56 56 56-56 56q38 50 58 107t20 119q0 74-28.5 139.5T734-186q-49 49-114.5 77.5T480-80Zm0-80q116 0 198-82t82-198q0-116-82-198t-198-82q-116 0-198 82t-82 198q0 116 82 198t198 82Zm0-280Zm-80 160 240-160-240-160v320Z"/></svg>';
+      const toSvgElement = (svgStr: string) =>
+        new DOMParser().parseFromString(svgStr, 'image/svg+xml').documentElement;
 
       const iconSpan = btn.createSpan({ cls: 'kanban-plugin__icon-timer' });
-      if (!timerManager.state.running) {
-        iconSpan.innerHTML = TIMER_PLAY_SVG;
-      } else if (mode === 'pomodoro') {
-        iconSpan.innerHTML = HOURGLASS_PAUSE_SVG;
-      } else if (mode === 'stopwatch') {
-        iconSpan.innerHTML = TIMER_PAUSE_SVG;
-      } else {
-        iconSpan.innerHTML = REST_SVG;
-      }
+      const iconEl =
+        !timerManager.state.running
+          ? toSvgElement(TIMER_PLAY_SVG)
+          : mode === 'pomodoro'
+          ? toSvgElement(HOURGLASS_PAUSE_SVG)
+          : mode === 'stopwatch'
+          ? toSvgElement(TIMER_PAUSE_SVG)
+          : toSvgElement(REST_SVG);
+      iconSpan.appendChild(iconEl);
 
       btn.createSpan({ text: ` ${displayTime}` });
     };

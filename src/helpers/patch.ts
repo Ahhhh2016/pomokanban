@@ -1,5 +1,5 @@
 import { isPlainObject } from 'is-plain-object';
-import moment from 'moment';
+import { moment } from 'obsidian';
 import { getAPI } from 'obsidian-dataview';
 
 type Key = string | number;

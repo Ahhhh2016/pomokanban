@@ -3,7 +3,7 @@ import { App, Modal, Notice } from 'obsidian';
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { TimerManager } from '../TimerManager';
-import moment from 'moment';
+import { moment } from 'obsidian';
 import { t } from '../lang/helpers';
 
 function formatTime(ms: number) {

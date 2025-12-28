@@ -11,6 +11,12 @@ module.exports = {
     'plugin:react/recommended',
     'plugin:@typescript-eslint/recommended',
   ],
+  // Ignore third-party vendored code that we don't control
+  // to avoid lint noise from deprecated browser APIs and patterns.
+  ignorePatterns: [
+    './src/docs',
+    'src/components/Editor/flatpickr/**',
+  ],
   globals: {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
