@@ -179,13 +179,25 @@ export function getTasksPlugin() {
   return plugins.plugins?.['obsidian-tasks-plugin'] ?? null;
 }
 
+type TaskStatus = {
+  type?: string;
+  symbol: string;
+  nextStatusSymbol?: string;
+};
+
+type TasksPluginSettings = {
+  statusSettings?: {
+    coreStatuses?: Array<TaskStatus>;
+    customStatuses?: Array<TaskStatus>;
+  };
+};
+
 function getTasksPluginSettings() {
   const suggests = (window as unknown as {
     app: { workspace: { editorSuggest: { suggests: Array<{ settings?: { taskFormat?: unknown } }> } } };
   }).app.workspace.editorSuggest.suggests;
-  return suggests.find((s) => s.settings && (s.settings as any).taskFormat)?.settings as
-    | { statusSettings?: { coreStatuses?: Array<{ type: string; symbol: string }>; customStatuses?: Array<{ type: string; symbol: string } } } }
-    | undefined;
+  const match = suggests.find((s) => s.settings && (s.settings as any).taskFormat);
+  return (match?.settings as TasksPluginSettings | undefined);
 }
 
 export function getTaskStatusDone(): string {

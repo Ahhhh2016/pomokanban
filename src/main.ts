@@ -90,7 +90,7 @@ export default class KanbanPlugin extends Plugin {
 
   unload(): void {
     super.unload();
-    Promise.all(
+    void Promise.all(
       this.app.workspace.getLeavesOfType(kanbanViewType).map((leaf) => {
         this.kanbanFileModes[(leaf as any).id] = 'markdown';
         return this.setMarkdownView(leaf);

@@ -57,7 +57,7 @@ export function bindMarkdownEvents(view: KanbanView) {
     if (!link) return;
 
     evt.preventDefault();
-    app.workspace.openLinkText(link.href, view.file.path, Keymap.isModEvent(evt));
+    void app.workspace.openLinkText(link.href, view.file.path, Keymap.isModEvent(evt));
   };
 
   contentEl.on('click', 'a.internal-link', onLinkClick);
