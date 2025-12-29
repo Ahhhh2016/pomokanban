@@ -82,10 +82,10 @@ export const DEFAULT_SYMBOLS = {
   idSymbol: '🆔',
 } as const;
 
-export function lableToIcon(label: string, value: any) {
+export function lableToIcon(label: string, value: unknown) {
   switch (label) {
     case 'priority':
-      return priorityToIcon(value);
+      return priorityToIcon(value as Priority);
     case 'start':
       return DEFAULT_SYMBOLS.startDateSymbol;
     case 'created':
@@ -169,17 +169,23 @@ export function iconToPriority(icon: string) {
 }
 
 export function getTasksPlugin() {
-  if (!((window as any).app as any).plugins.enabledPlugins.has('obsidian-tasks-plugin')) {
+  const plugins = (window as unknown as {
+    app: { plugins?: { enabledPlugins: Set<string>; plugins?: Record<string, any> } };
+  }).app.plugins;
+  if (!plugins?.enabledPlugins?.has('obsidian-tasks-plugin')) {
     return null;
   }
 
-  return ((window as any).app as any).plugins.plugins['obsidian-tasks-plugin'];
+  return plugins.plugins?.['obsidian-tasks-plugin'] ?? null;
 }
 
 function getTasksPluginSettings() {
-  return ((window as any).app as any).workspace.editorSuggest.suggests.find(
-    (s: any) => s.settings && s.settings.taskFormat
-  )?.settings;
+  const suggests = (window as unknown as {
+    app: { workspace: { editorSuggest: { suggests: Array<{ settings?: { taskFormat?: unknown } }> } } };
+  }).app.workspace.editorSuggest.suggests;
+  return suggests.find((s) => s.settings && (s.settings as any).taskFormat)?.settings as
+    | { statusSettings?: { coreStatuses?: Array<{ type: string; symbol: string }>; customStatuses?: Array<{ type: string; symbol: string } } } }
+    | undefined;
 }
 
 export function getTaskStatusDone(): string {
@@ -187,8 +193,8 @@ export function getTaskStatusDone(): string {
   const statuses = settings?.statusSettings;
   if (!statuses) return 'x';
 
-  let done = statuses.coreStatuses?.find((s: any) => s.type === 'DONE');
-  if (!done) done = statuses.customStatuses?.find((s: any) => s.type === 'DONE');
+  let done = statuses.coreStatuses?.find((s) => s.type === 'DONE');
+  if (!done) done = statuses.customStatuses?.find((s) => s.type === 'DONE');
   if (!done) return 'x';
 
   return done.symbol;

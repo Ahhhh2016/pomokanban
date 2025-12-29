@@ -539,11 +539,14 @@ async function linkFromBuffer(
   ext: string,
   buffer: ArrayBuffer
 ) {
-  const path = (await (stateManager.app.vault as any).getAvailablePathForAttachments(
+  const vaultWithAttachments = stateManager.app.vault as unknown as {
+    getAvailablePathForAttachments: (name: string, ext: string, file: TFile) => Promise<string>;
+  };
+  const path = await vaultWithAttachments.getAvailablePathForAttachments(
     fileName,
     ext,
     stateManager.file
-  )) as string;
+  );
 
   const newFile = await stateManager.app.vault.createBinary(path, buffer);
 
@@ -568,13 +571,16 @@ async function handleElectronPaste(stateManager: StateManager, win: Window & typ
           const ext = splitFile.pop();
           const fileName = splitFile.join('.');
 
-          const path = (await (stateManager.app.vault as any).getAvailablePathForAttachments(
+          const vaultWithAttachments = stateManager.app.vault as unknown as {
+            getAvailablePathForAttachments: (name: string, ext: string, file: TFile) => Promise<string>;
+          };
+          const path = await vaultWithAttachments.getAvailablePathForAttachments(
             fileName,
             ext,
             stateManager.file
-          )) as string;
+          );
 
-          const basePath = (stateManager.app.vault.adapter as any).basePath;
+          const basePath = (stateManager.app.vault.adapter as unknown as { basePath?: string }).basePath;
 
           await fs.copyFile(file, nPath.join(basePath, path));
 
@@ -626,11 +632,14 @@ function handleFiles(stateManager: StateManager, files: FileWithPath[], isPaste?
         const reader = new FileReader();
         reader.onload = async (e) => {
           try {
-            const path = (await (stateManager.app.vault as any).getAvailablePathForAttachments(
+            const vaultWithAttachments = stateManager.app.vault as unknown as {
+              getAvailablePathForAttachments: (name: string, ext: string, file: TFile) => Promise<string>;
+            };
+            const path = await vaultWithAttachments.getAvailablePathForAttachments(
               fileName,
               ext,
               stateManager.file
-            )) as string;
+            );
             const newFile = await stateManager.app.vault.createBinary(
               path,
               e.target.result as ArrayBuffer
@@ -705,7 +714,14 @@ export async function handleDragOrPaste(
   e: DragEvent | ClipboardEvent,
   win: Window & typeof globalThis
 ): Promise<string[]> {
-  const draggable = (stateManager.app as any).dragManager.draggable;
+  const draggable = (stateManager.app as unknown as { dragManager?: { draggable?: any } }).dragManager?.draggable as
+    | {
+        type: 'file' | 'files' | 'folder' | 'link';
+        file?: TFile | TFolder;
+        files?: TFile[];
+        linktext?: string;
+      }
+    | undefined;
   const transfer = (e as DragEvent).view
     ? (e as DragEvent).dataTransfer
     : (e as ClipboardEvent).clipboardData;

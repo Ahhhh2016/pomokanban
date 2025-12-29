@@ -11,6 +11,7 @@ import {
   WorkspaceLeaf,
   debounce,
   Notice,
+  Editor,
 } from 'obsidian';
 
 import { KanbanFormat, KanbanSettings, KanbanViewSettings, SettingsModal } from './Settings';
@@ -40,7 +41,7 @@ export class KanbanView extends TextFileView implements HoverParent {
   previewCache: Map<string, BasicMarkdownRenderer>;
   previewQueue: PromiseQueue;
 
-  activeEditor: any;
+  activeEditor: Editor | null;
   viewSettings: KanbanViewSettings = {};
 
   get isPrimary(): boolean {
@@ -48,7 +49,8 @@ export class KanbanView extends TextFileView implements HoverParent {
   }
 
   get id(): string {
-    return `${(this.leaf as any).id}:::${this.file?.path}`;
+    const leafId = (this.leaf as unknown as { id?: string })?.id ?? '';
+    return `${leafId}:::${this.file?.path}`;
   }
 
   get isShiftPressed(): boolean {
@@ -172,7 +174,7 @@ export class KanbanView extends TextFileView implements HoverParent {
     super.onload();
     if (Platform.isMobile) {
       this.containerEl.setCssProps({
-        '--mobile-navbar-height': (this.app as any).mobileNavbar.containerEl.clientHeight + 'px',
+        '--mobile-navbar-height': ((this.app as unknown as { mobileNavbar?: { containerEl: HTMLElement } }).mobileNavbar?.containerEl?.clientHeight ?? 0) + 'px',
       });
     }
 
@@ -223,7 +225,8 @@ export class KanbanView extends TextFileView implements HoverParent {
 
   setViewData(data: string, clear?: boolean) {
     if (!hasFrontmatterKeyRaw(data)) {
-      this.plugin.kanbanFileModes[(this.leaf as any).id || this.file.path] = 'markdown';
+      const leafId = (this.leaf as unknown as { id?: string })?.id;
+      this.plugin.kanbanFileModes[leafId || this.file.path] = 'markdown';
       this.plugin.removeView(this);
       this.plugin.setMarkdownView(this.leaf, false);
 
@@ -242,9 +245,12 @@ export class KanbanView extends TextFileView implements HoverParent {
     this.plugin.addView(this, data, !clear && this.isPrimary);
   }
 
-  async setState(state: any, result: ViewStateResult): Promise<void> {
-    this.viewSettings = { ...state.kanbanViewState };
-    await super.setState(state, result);
+  async setState(state: unknown, result: ViewStateResult): Promise<void> {
+    const s = state as { kanbanViewState?: KanbanViewSettings };
+    if (s?.kanbanViewState) {
+      this.viewSettings = { ...s.kanbanViewState };
+    }
+    await super.setState(state as any, result);
   }
 
   getState() {

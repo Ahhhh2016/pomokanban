@@ -294,7 +294,7 @@ export function useItemMenu({
         addMoveToOptions(menu);
       } else {
         menu.addItem((item) => {
-          const submenu = (item as any)
+          const submenu = item
             .setTitle(t('Move to list'))
             .setIcon('lucide-square-kanban')
             .setSubmenu();

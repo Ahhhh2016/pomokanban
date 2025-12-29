@@ -3,7 +3,7 @@ import { moment } from 'obsidian';
 import { getAPI } from 'obsidian-dataview';
 
 type Key = string | number;
-type Diffable = Record<Key, any> | any[];
+type Diffable = Record<Key, unknown> | unknown[];
 type OpPath = Array<Key>;
 
 const REMOVE = 'remove';
@@ -13,7 +13,7 @@ const ADD = 'add';
 export interface Op {
   op: 'remove' | 'replace' | 'add';
   path: OpPath;
-  value?: any;
+  value?: unknown;
 }
 
 interface Diff {
@@ -22,15 +22,15 @@ interface Diff {
   add: Op[];
 }
 
-type SkipFn = (k: OpPath, val?: any) => boolean;
-type ToStringFn = (val: any) => string;
+type SkipFn = (k: OpPath, val?: unknown) => boolean;
+type ToStringFn = (val: unknown) => string;
 
-function isDiffable(obj: any): obj is Diffable {
+function isDiffable(obj: unknown): obj is Diffable {
   if (!obj) return false;
   if (isPlainObject(obj) || Array.isArray(obj)) return true;
 
   const dv = getAPI();
-  if (!moment.isMoment(obj) && dv?.value.isObject(obj)) return true;
+  if (!moment.isMoment(obj as any) && dv?.value.isObject(obj)) return true;
 
   return false;
 }
@@ -70,16 +70,16 @@ function getDiff(
 ) {
   if (!isDiffable(obj1) || !isDiffable(obj2)) return diffs;
 
-  const obj1Keys = Object.keys(obj1);
-  const obj2Keys = Object.keys(obj2);
+  const obj1Keys = Object.keys(obj1 as object);
+  const obj2Keys = Object.keys(obj2 as object);
   const obj2KeysLength = obj2Keys.length;
-  const lengthDelta = obj1.length - obj2.length;
+  const lengthDelta = (obj1 as unknown[]).length - (obj2 as unknown[]).length;
 
   let path: OpPath;
 
-  if (trimFromRight(obj1, obj2)) {
+  if (trimFromRight(obj1 as Record<string, unknown>, obj2 as Record<string, unknown>)) {
     for (const k of obj1Keys) {
-      const key = Array.isArray(obj1) ? Number(k) : k;
+      const key = Array.isArray(obj1) ? Number(k) : (k as Key);
       if (!(key in obj2)) {
         path = basePathForRemoves.concat(key);
         if (skip(path)) continue;
@@ -91,7 +91,7 @@ function getDiff(
     }
 
     for (const k of obj2Keys) {
-      const key = Array.isArray(obj2) ? Number(k) : k;
+      const key = Array.isArray(obj2) ? Number(k) : (k as Key);
       pushReplaces(
         key,
         obj1,
@@ -115,7 +115,7 @@ function getDiff(
     }
 
     // now make a copy of obj1 with excess elements left trimmed and see if there any replaces
-    const obj1Trimmed = obj1.slice(lengthDelta);
+    const obj1Trimmed = (obj1 as unknown[]).slice(lengthDelta);
     for (let i = 0; i < obj2KeysLength; i++) {
       pushReplaces(
         i,
@@ -136,7 +136,7 @@ function getDiff(
 }
 
 function pushReplaces(
-  key: any,
+  key: Key,
   obj1: Diffable,
   obj2: Diffable,
   path: OpPath,
@@ -145,12 +145,12 @@ function pushReplaces(
   skip: SkipFn,
   toString: ToStringFn
 ) {
-  const obj1AtKey = obj1[key];
-  const obj2AtKey = obj2[key];
+  const obj1AtKey = (obj1 as any)[key];
+  const obj2AtKey = (obj2 as any)[key];
 
   if (skip(path, obj2AtKey)) return;
 
-  if (!(key in obj1) && key in obj2) {
+  if (!(key in (obj1 as any)) && key in (obj2 as any)) {
     diffs.add.push({ op: ADD, path, value: obj2AtKey });
   } else if (obj1AtKey !== obj2AtKey) {
     if (
@@ -167,32 +167,32 @@ function pushReplaces(
       ) {
         diffs.replace.push({ op: REPLACE, path, value: obj2AtKey });
       } else {
-        getDiff(obj1[key], obj2[key], path, pathForRemoves, diffs, skip, toString);
+        getDiff((obj1 as any)[key], (obj2 as any)[key], path, pathForRemoves, diffs, skip, toString);
       }
     }
   }
 }
 
-function differentTypes(a: any, b: any) {
+function differentTypes(a: unknown, b: unknown) {
   return Object.prototype.toString.call(a) !== Object.prototype.toString.call(b);
 }
 
-function trimFromRight(obj1: Record<string, any>, obj2: Record<string, any>) {
-  const lengthDelta = obj1.length - obj2.length;
+function trimFromRight(obj1: Record<string, unknown>, obj2: Record<string, unknown>) {
+  const lengthDelta = (obj1 as unknown[]).length - (obj2 as unknown[]).length;
 
   if (Array.isArray(obj1) && Array.isArray(obj2) && lengthDelta > 0) {
     let leftMatches = 0;
     let rightMatches = 0;
-    for (let i = 0; i < obj2.length; i++) {
-      if (String(obj1[i]) === String(obj2[i])) {
+    for (let i = 0; i < (obj2 as unknown[]).length; i++) {
+      if (String((obj1 as any)[i]) === String((obj2 as any)[i])) {
         leftMatches++;
       } else {
         break;
       }
     }
 
-    for (let j = obj2.length; j > 0; j--) {
-      if (String(obj1[j + lengthDelta]) === String(obj2[j])) {
+    for (let j = (obj2 as unknown[]).length; j > 0; j--) {
+      if (String((obj1 as any)[j + lengthDelta]) === String((obj2 as any)[j])) {
         rightMatches++;
       } else {
         break;
@@ -215,48 +215,53 @@ export function diffApply(obj: Diffable, diff: Op[]) {
     throw new Error('diff must be an array');
   }
 
-  if (Array.isArray(obj)) obj = obj.slice();
-  else obj = { ...obj };
+  if (Array.isArray(obj)) obj = (obj as unknown[]).slice();
+  else obj = { ...(obj as object) };
 
   for (const thisDiff of diff) {
     const thisOp = thisDiff.op;
     const thisPath = thisDiff.path;
     const pathCopy = thisPath.slice();
-    const lastProp: any = pathCopy.pop();
+    const lastProp: Key | undefined = pathCopy.pop();
     let subObject = obj;
 
     prototypeCheck(lastProp);
     if (lastProp == null) return false;
 
-    let thisProp: any;
-    while ((thisProp = pathCopy.shift()) !== null) {
+    let thisProp: Key | undefined;
+    while ((thisProp = pathCopy.shift()) !== undefined) {
       if (thisProp === undefined) break;
 
       prototypeCheck(thisProp);
-      if (!(thisProp in subObject)) {
-        subObject = subObject[thisProp] = {};
-      } else if (Array.isArray(subObject[thisProp])) {
-        subObject = subObject[thisProp] = subObject[thisProp].slice();
-      } else if (isPlainObject(subObject[thisProp])) {
-        subObject = subObject[thisProp] = { ...subObject[thisProp] };
+      if (!(thisProp in (subObject as any))) {
+        (subObject as any)[thisProp] = {};
+        subObject = (subObject as any)[thisProp];
+      } else if (Array.isArray((subObject as any)[thisProp])) {
+        (subObject as any)[thisProp] = (subObject as any)[thisProp].slice();
+        subObject = (subObject as any)[thisProp];
+      } else if (isPlainObject((subObject as any)[thisProp])) {
+        (subObject as any)[thisProp] = { ...(subObject as any)[thisProp] };
+        subObject = (subObject as any)[thisProp];
       } else {
-        subObject = subObject[thisProp];
+        subObject = (subObject as any)[thisProp];
       }
     }
 
     if (thisOp === REMOVE || thisOp === REPLACE) {
       const path = thisDiff.path;
-      if (!Object.prototype.hasOwnProperty.call(subObject, lastProp)) {
+      if (!Object.prototype.hasOwnProperty.call(subObject as object, lastProp as PropertyKey)) {
         throw new Error(['expected to find property', path, 'in object', obj].join(' '));
       }
     }
 
     if (thisOp === REMOVE && typeof lastProp === 'number') {
-      Array.isArray(subObject) ? subObject.splice(lastProp, 1) : delete subObject[lastProp];
+      Array.isArray(subObject)
+        ? (subObject as unknown[]).splice(lastProp, 1)
+        : delete (subObject as any)[lastProp];
     }
 
     if (thisOp === REPLACE || thisOp === ADD) {
-      subObject[lastProp] = thisDiff.value;
+      (subObject as any)[lastProp!] = thisDiff.value;
     }
   }
 

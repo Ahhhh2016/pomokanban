@@ -37,7 +37,7 @@ export function TimerButton({ item }: TimerButtonProps) {
 
   return (
     <a
-      onClick={onClick as any}
+      onClick={onClick}
       className={classcat([
         c('item-prefix-button'),
         'clickable-icon',

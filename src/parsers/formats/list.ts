@@ -78,9 +78,11 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
   visit(
     item,
     ['text', 'wikilink', 'embedWikilink', 'image', 'inlineCode', 'code', 'hashtag'],
-    (node: any, i, parent) => {
+    (node: Content & { value?: string; alt?: string; type: string }, i, parent) => {
       if (node.type === 'hashtag') {
-        if (!parent.children.first()?.value?.startsWith('```')) {
+        const firstChild = (parent as Parent)?.children?.[0] as Partial<{ value?: string }> | undefined;
+        const firstValue = firstChild?.value;
+        if (!firstValue?.startsWith('```')) {
           titleSearch += ' #' + node.value;
         }
       } else {
@@ -132,7 +134,7 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
 
       if (
         genericNode.type === 'hashtag' &&
-        !(parent.children.first() as any)?.value?.startsWith('```')
+        !((parent as Parent)?.children?.[0] as Partial<{ value?: string }>)?.value?.startsWith('```')
       ) {
         if (!itemData.metadata.tags) {
           itemData.metadata.tags = [];
@@ -175,7 +177,7 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
       if (genericNode.type === 'duedate' || genericNode.type === 'duedateLink') {
         // Always use the last (most recent) due date if multiple exist
         // Access duedate data from the correct property with better fallback
-        const duedateValue = (genericNode as any).duedate || (genericNode as DateNode).date;
+        const duedateValue = (genericNode as Partial<{ duedate?: string }>).duedate || (genericNode as DateNode).date;
         if (duedateValue) {
           itemData.metadata.duedateStr = duedateValue;
         }
@@ -191,7 +193,7 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
 
       if (genericNode.type === 'duetime') {
         // Access duetime data from the correct property with better fallback
-        const duetimeValue = (genericNode as any).duetime || (genericNode as TimeNode).time;
+        const duetimeValue = (genericNode as Partial<{ duetime?: string }>).duetime || (genericNode as TimeNode).time;
         if (duetimeValue) {
           itemData.metadata.duetimeStr = duetimeValue;
         }
@@ -205,7 +207,8 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
       }
 
       if (genericNode.type === 'estimatetime') {
-        const estimatetimeValue = (genericNode as any).estimatetime || (genericNode as TimeNode).time;
+        const estimatetimeValue =
+          (genericNode as Partial<{ estimatetime?: string }>).estimatetime || (genericNode as TimeNode).time;
         if (estimatetimeValue) {
           itemData.metadata.estimatetimeStr = estimatetimeValue;
         }
@@ -310,7 +313,7 @@ function isArchiveLane(child: Content, children: Content[], currentIndex: number
 export function astToUnhydratedBoard(
   stateManager: StateManager,
   settings: KanbanSettings,
-  frontmatter: Record<string, any>,
+  frontmatter: Record<string, unknown>,
   root: Root,
   md: string
 ): Board {

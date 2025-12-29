@@ -63,7 +63,7 @@ export const ItemTimerButton = Preact.memo(function ItemTimerButton({
       <a
         data-ignore-drag={true}
         onPointerDown={(e) => e.preventDefault()}
-        onClick={onClick as any}
+        onClick={onClick}
         className={
           `${c('item-prefix-button')} clickable-icon` + (isRunning ? ' is-enabled' : '')
         }

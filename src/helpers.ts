@@ -4,32 +4,40 @@ import { getDailyNoteSettings, getDateFromFile } from 'obsidian-daily-notes-inte
 import { frontmatterKey } from './parsers/common';
 
 export function gotoNextDailyNote(app: App, file: TFile) {
-  const date = getDateFromFile(file as any, 'day');
+  const date = getDateFromFile(file, 'day');
 
   if (!date || !date.isValid()) {
     return;
   }
 
-  const dailyNotePlugin = (app as any).internalPlugins.plugins['daily-notes'].instance;
+  const dailyNotePlugin = (app as unknown as {
+    internalPlugins?: { plugins?: { ['daily-notes']?: { instance?: { gotoNextExisting: (d: any) => void } } } };
+  }).internalPlugins?.plugins?.['daily-notes']?.instance;
 
-  dailyNotePlugin.gotoNextExisting(date);
+  dailyNotePlugin?.gotoNextExisting?.(date);
 }
 
 export function gotoPrevDailyNote(app: App, file: TFile) {
-  const date = getDateFromFile(file as any, 'day');
+  const date = getDateFromFile(file, 'day');
 
   if (!date || !date.isValid()) {
     return;
   }
 
-  const dailyNotePlugin = (app as any).internalPlugins.plugins['daily-notes'].instance;
+  const dailyNotePlugin = (app as unknown as {
+    internalPlugins?: { plugins?: { ['daily-notes']?: { instance?: { gotoPreviousExisting: (d: any) => void } } } };
+  }).internalPlugins?.plugins?.['daily-notes']?.instance;
 
-  dailyNotePlugin.gotoPreviousExisting(date);
+  dailyNotePlugin?.gotoPreviousExisting?.(date);
 }
 
 export function buildLinkToDailyNote(app: App, dateStr: string) {
   const dailyNoteSettings = getDailyNoteSettings();
-  const shouldUseMarkdownLinks = !!((window as any).app.vault as any).getConfig('useMarkdownLinks');
+  const shouldUseMarkdownLinks = !!(
+    (window as unknown as { app: { vault: { getConfig: (k: string) => unknown } } }).app.vault.getConfig(
+      'useMarkdownLinks'
+    )
+  );
 
   if (shouldUseMarkdownLinks) {
     return `[${dateStr}](${
@@ -58,7 +66,8 @@ export function hasFrontmatterKeyRaw(data: string) {
 
 export function hasFrontmatterKey(file: TFile) {
   if (!file) return false;
-  const cache = (window as any).app.metadataCache.getFileCache(file);
+  const cache = (window as unknown as { app: { metadataCache: { getFileCache: (f: TFile) => unknown } } }).app
+    .metadataCache.getFileCache(file);
   return !!cache?.frontmatter?.[frontmatterKey];
 }
 

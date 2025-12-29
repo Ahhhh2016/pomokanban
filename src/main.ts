@@ -3,6 +3,7 @@ import {
   MarkdownView,
   Platform,
   Plugin,
+  App,
   TFile,
   TFolder,
   ViewState,
@@ -24,7 +25,7 @@ import { basicFrontmatter, frontmatterKey } from './parsers/common';
 import { TimerManager } from './TimerManager';
 
 // Obsidian provides a global `app` variable; declare it for type checking
-declare const app: any;
+declare const app: App;
 
 interface WindowRegistry {
   viewMap: Map<string, KanbanView>;
@@ -32,8 +33,16 @@ interface WindowRegistry {
   appRoot: HTMLElement;
 }
 
-function getEditorClass(app: any) {
-  const md = (window as any).app.embedRegistry.embedByExtension.md(
+function getEditorClass(app: App) {
+  const md = (window as unknown as {
+    app: {
+      embedRegistry: {
+        embedByExtension: {
+          md: (args: { app: App; containerEl: HTMLElement; state: unknown }, a: unknown, b: string) => any;
+        };
+      };
+    };
+  }).app.embedRegistry.embedByExtension.md(
     { app: app, containerEl: createDiv(), state: {} },
     null,
     ''
@@ -102,10 +111,12 @@ export default class KanbanPlugin extends Plugin {
     this.windowRegistry.clear();
     this.kanbanFileModes = {};
 
-    (this.app.workspace as any).unregisterHoverLinkSource(frontmatterKey);
+    (this.app.workspace as unknown as { unregisterHoverLinkSource?: (id: string) => void }).unregisterHoverLinkSource?.(
+      frontmatterKey
+    );
   }
 
-  MarkdownEditor: any;
+  MarkdownEditor: unknown;
 
   async onload() {
     await this.loadSettings();
@@ -122,13 +133,13 @@ export default class KanbanPlugin extends Plugin {
     this.registerEditorSuggest(new DateSuggest(this.app, this));
 
     this.registerEvent(
-      this.app.workspace.on('window-open', (_: any, win: Window) => {
+      this.app.workspace.on('window-open', (_evt: unknown, win: Window) => {
         this.mount(win);
       })
     );
 
     this.registerEvent(
-      this.app.workspace.on('window-close', (_: any, win: Window) => {
+      this.app.workspace.on('window-close', (_evt: unknown, win: Window) => {
         this.unmount(win);
       })
     );
@@ -158,8 +169,10 @@ export default class KanbanPlugin extends Plugin {
     // Mount an empty component to start; views will be added as we go
     this.mount(window);
 
-    (this.app.workspace as any).floatingSplit?.children?.forEach((c: any) => {
-      this.mount(c.win);
+    ((this.app.workspace as unknown as { floatingSplit?: { children?: Array<{ win: Window }> } }).floatingSplit
+      ?.children || []
+    ).forEach((c) => {
+      if (c?.win) this.mount(c.win);
     });
 
     this.registerDomEvent(window, 'keydown', this.handleShift);
@@ -286,7 +299,8 @@ export default class KanbanPlugin extends Plugin {
     }
 
     const reg = this.windowRegistry.get(win);
-    const oldId = `${(view.leaf as any).id}:::${oldPath}`;
+    const leafId = (view.leaf as unknown as { id?: string })?.id ?? '';
+    const oldId = `${leafId}:::${oldPath}`;
 
     if (reg.viewMap.has(oldId)) {
       reg.viewMap.delete(oldId);
@@ -360,10 +374,10 @@ export default class KanbanPlugin extends Plugin {
   async newKanban(folder?: TFolder) {
     const targetFolder = folder
       ? folder
-      : this.app.fileManager.getNewFileParent((window as any).app.workspace.getActiveFile()?.path || '');
+      : this.app.fileManager.getNewFileParent(this.app.workspace.getActiveFile()?.path || '');
 
     try {
-      const kanban: TFile = await ((window as any).app.fileManager as any).createNewMarkdownFile(
+      const kanban: TFile = await this.app.fileManager.createNewMarkdownFile(
         targetFolder,
         t('Untitled Kanban')
       );
@@ -425,7 +439,8 @@ export default class KanbanPlugin extends Plugin {
                 .setIcon(kanbanIcon)
                 .setSection('pane')
                 .onClick(() => {
-                  this.kanbanFileModes[(leaf as any).id || file.path] = kanbanViewType;
+                  const leafId = (leaf as unknown as { id?: string })?.id;
+                  this.kanbanFileModes[leafId || file.path] = kanbanViewType;
                   this.setKanbanView(leaf);
                 });
             });
@@ -446,7 +461,8 @@ export default class KanbanPlugin extends Plugin {
               .setIcon(kanbanIcon)
               .setSection('pane')
               .onClick(() => {
-                this.kanbanFileModes[(leaf as any).id || file.path] = kanbanViewType;
+                const leafId2 = (leaf as unknown as { id?: string })?.id;
+                this.kanbanFileModes[leafId2 || file.path] = kanbanViewType;
                 this.setKanbanView(leaf);
               });
           });
@@ -460,7 +476,8 @@ export default class KanbanPlugin extends Plugin {
                 .setIcon(kanbanIcon)
                 .setSection('pane')
                 .onClick(() => {
-                  this.kanbanFileModes[(leaf as any).id || file.path] = 'markdown';
+                  const lid = (leaf as unknown as { id?: string })?.id;
+                  this.kanbanFileModes[lid || file.path] = 'markdown';
                   this.setMarkdownView(leaf);
                 });
             });
@@ -574,20 +591,26 @@ export default class KanbanPlugin extends Plugin {
     );
 
     this.registerEvent(
-      (app as any).metadataCache.on('dataview:metadata-change', (_: any, file: TFile) => {
+      (app.metadataCache as unknown as {
+        on: (event: string, cb: (...args: unknown[]) => void) => unknown;
+      }).on('dataview:metadata-change', (_evt: unknown, file: TFile) => {
         notifyFileChange(file);
       })
     );
 
     this.registerEvent(
-      (app as any).metadataCache.on('dataview:api-ready', () => {
+      (app.metadataCache as unknown as {
+        on: (event: string, cb: (...args: unknown[]) => void) => unknown;
+      }).on('dataview:api-ready', () => {
         this.stateManagers.forEach((manager) => {
           manager.forceRefresh();
         });
       })
     );
 
-    (app.workspace as any).registerHoverLinkSource(frontmatterKey, {
+    (app.workspace as unknown as {
+      registerHoverLinkSource: (id: string, obj: { display: string; defaultMod: boolean }) => void;
+    }).registerHoverLinkSource(frontmatterKey, {
       display: 'Kanban',
       defaultMod: true,
     });
@@ -631,13 +654,15 @@ export default class KanbanPlugin extends Plugin {
         const activeView = app.workspace.getActiveViewOfType(KanbanView);
 
         if (activeView) {
-          this.kanbanFileModes[(activeView.leaf as any).id || activeFile.path] = 'markdown';
+          const leafId = (activeView.leaf as unknown as { id?: string })?.id;
+          this.kanbanFileModes[leafId || activeFile.path] = 'markdown';
           this.setMarkdownView(activeView.leaf);
         } else if (fileIsKanban) {
           const activeView = app.workspace.getActiveViewOfType(MarkdownView);
 
           if (activeView) {
-            this.kanbanFileModes[(activeView.leaf as any).id || activeFile.path] = kanbanViewType;
+            const leafId = (activeView.leaf as unknown as { id?: string })?.id;
+            this.kanbanFileModes[leafId || activeFile.path] = kanbanViewType;
             this.setKanbanView(activeView.leaf);
           }
         }
@@ -661,7 +686,7 @@ export default class KanbanPlugin extends Plugin {
             .then(() => {
               this.setKanbanView(activeView.leaf);
             })
-            .catch((e: any) => console.error(e));
+            .catch((e: unknown) => console.error(e));
         }
       },
     });
@@ -749,9 +774,9 @@ export default class KanbanPlugin extends Plugin {
 
     this.app.workspace.onLayoutReady(() => {
       this.register(
-        around((app as any).commands, {
+        around((app.commands as unknown as Record<string, unknown>), {
           executeCommand(next) {
-            return function (command: any) {
+            return function (command: { id?: string }) {
               const view = app.workspace.getActiveViewOfType(KanbanView);
 
               if (view && command?.id) {
@@ -799,7 +824,7 @@ export default class KanbanPlugin extends Plugin {
         },
 
         setViewState(next) {
-          return function (state: ViewState, ...rest: any[]) {
+          return function (state: ViewState, ...rest: unknown[]) {
             if (
               // Don't force kanban mode during shutdown
               self._loaded &&
@@ -821,11 +846,11 @@ export default class KanbanPlugin extends Plugin {
 
                 self.kanbanFileModes[state.state.file as string] = kanbanViewType;
 
-                return next.apply(this, [newState, ...rest]);
+                return next.apply(this, [newState, ...(rest as [])]);
               }
             }
 
-            return next.apply(this, [state, ...rest]);
+            return next.apply(this, [state, ...(rest as [])]);
           };
         },
       })

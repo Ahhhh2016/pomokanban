@@ -91,7 +91,7 @@ function Item({
                     onChange={(e) => {
                       updateKey({
                         ...dateColorKey,
-                        unit: (e.target as HTMLSelectElement).value as any,
+                        unit: (e.target as HTMLSelectElement).value as 'hours' | 'days' | 'weeks' | 'months',
                       });
                     }}
                   >
@@ -106,7 +106,7 @@ function Item({
                     onChange={(e) => {
                       updateKey({
                         ...dateColorKey,
-                        direction: (e.target as HTMLSelectElement).value as any,
+                        direction: (e.target as HTMLSelectElement).value as 'after' | 'before',
                       });
                     }}
                   >

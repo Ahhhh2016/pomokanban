@@ -3,6 +3,9 @@ import { Notice, Plugin, TFile, moment } from 'obsidian';
 import update from 'immutability-helper';
 import { StopReasonModal } from './components/StopReasonModal';
 import { t } from './lang/helpers';
+import { KanbanSettings } from './Settings';
+import { StateManager } from './StateManager';
+import { Board, Item } from './components/types';
 
 export type TimerMode = 'stopwatch' | 'pomodoro' | 'break';
 
@@ -78,9 +81,7 @@ export class TimerManager {
     this.subscribeBoardDurationChanges();
 
     // Obsidian helper that clears when plugin unloads
-    this.intervalId = (plugin.registerInterval as any)(
-      window.setInterval(() => this.tick(), 1000)
-    );
+    this.intervalId = plugin.registerInterval(window.setInterval(() => this.tick(), 1000));
   }
 
   /**
@@ -88,24 +89,28 @@ export class TimerManager {
    * Uses user-provided audio file path if available, otherwise falls back to a simple beep generated via Web Audio API.
    */
   private playEndSound() {
-    const globalSettings: any = (this.plugin as any).settings ?? {};
+    const globalSettings: Partial<KanbanSettings> =
+      (this.plugin as unknown as { settings?: Partial<KanbanSettings> }).settings ?? {};
 
     // Prefer board-level settings (for the card's board) over global settings
     const sm = this.getStateManagerForCard(this.state.targetCardId);
-    const getLocal = <T = any>(key: string): T | undefined => {
+    const getLocal = <K extends keyof KanbanSettings>(key: K): KanbanSettings[K] | undefined => {
       try {
-        return sm?.getSetting?.(key as any) as T;
+        return sm?.getSetting?.(key);
       } catch {
         return undefined;
       }
     };
 
-    const enabledLocal = getLocal<boolean>('timer-enable-sounds');
-    const enabled = (enabledLocal !== undefined ? enabledLocal : (globalSettings['timer-enable-sounds'] as boolean)) ?? false;
+    const enabledLocal = getLocal('timer-enable-sounds');
+    const enabled =
+      (enabledLocal !== undefined ? enabledLocal : (globalSettings['timer-enable-sounds'] as boolean)) ??
+      false;
     if (!enabled) return;
 
-    const volLocal = getLocal<number>('timer-sound-volume');
-    const volumePercentRaw: number | undefined = typeof volLocal === 'number' ? volLocal : (globalSettings['timer-sound-volume'] as number | undefined);
+    const volLocal = getLocal('timer-sound-volume');
+    const volumePercentRaw: number | undefined =
+      typeof volLocal === 'number' ? volLocal : (globalSettings['timer-sound-volume'] as number | undefined);
     const volumePercent = typeof volumePercentRaw === 'number' ? volumePercentRaw : 100;
     const volume = Math.max(0, Math.min(1, (volumePercent || 0) / 100));
 
@@ -153,7 +158,11 @@ export class TimerManager {
 
     // Fallback: generate a short beep using Web Audio API
     try {
-      const AudioContextClass = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass =
+        (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
+          .AudioContext ||
+        (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
       if (!AudioContextClass) return;
       const ctx = new AudioContextClass();
       const oscillator = ctx.createOscillator();
@@ -173,7 +182,8 @@ export class TimerManager {
 
   /** Attach listeners to each board's settings notifier so local timer changes apply immediately */
   private subscribeBoardDurationChanges() {
-    const sms: Map<any, any> = (this.plugin as any).stateManagers;
+    const sms =
+      (this.plugin as unknown as { stateManagers?: Map<string, StateManager> }).stateManagers;
     if (!sms) return;
     
     // List of timer settings to monitor
@@ -185,7 +195,7 @@ export class TimerManager {
       'timer-auto-rounds'
     ];
     
-    sms.forEach((sm: any) => {
+    sms.forEach((sm: StateManager) => {
       if (!sm?.settingsNotifiers) return;
       
       const listener = () => {
@@ -213,7 +223,8 @@ export class TimerManager {
    */
   updateSettings() {
     // Expect plugin.settings to exist and follow KanbanSettings interface
-    const settings: any = (this.plugin as any).settings ?? {};
+    const settings: Partial<KanbanSettings> =
+      (this.plugin as unknown as { settings?: Partial<KanbanSettings> }).settings ?? {};
 
     const pomodoroMin = Number(settings['timer-pomodoro']);
     if (!isNaN(pomodoroMin) && pomodoroMin > 0) {
@@ -237,11 +248,12 @@ export class TimerManager {
   /** Get board-local timer setting for the given card, falling back to global */
   private resolveTimerSettingForCard(cardId: string | undefined, settingKey: string): number | null {
     if (!cardId) return null;
-    const sms: Map<any, any> = (this.plugin as any).stateManagers;
+    const sms =
+      (this.plugin as unknown as { stateManagers?: Map<string, StateManager> }).stateManagers;
     if (!sms) return null;
     for (const sm of sms.values()) {
       // quick check if board contains this card id
-      const contains = (board: any): boolean => {
+      const contains = (board: Board): boolean => {
         if (!board?.children) return false;
         const stack = [...board.children];
         while (stack.length) {
@@ -253,7 +265,7 @@ export class TimerManager {
       };
 
       if (contains(sm.state)) {
-        const val = sm.getSetting?.(settingKey as any);
+        const val = sm.getSetting?.(settingKey as keyof KanbanSettings);
         if (val !== undefined && val !== null) return Number(val);
       }
     }
@@ -280,7 +292,8 @@ export class TimerManager {
       this.pomodoroDefault = localPomodoro * 60 * 1000;
     } else {
       // fallback to global
-      const settings: any = (this.plugin as any).settings ?? {};
+      const settings: Partial<KanbanSettings> =
+        (this.plugin as unknown as { settings?: Partial<KanbanSettings> }).settings ?? {};
       const pomodoroMin = Number(settings['timer-pomodoro']);
       this.pomodoroDefault = !isNaN(pomodoroMin) && pomodoroMin > 0 ? pomodoroMin * 60 * 1000 : 25 * 60 * 1000;
     }
@@ -289,7 +302,8 @@ export class TimerManager {
       this.shortBreakMs = localShortBreak * 60 * 1000;
     } else {
       // fallback to global
-      const settings: any = (this.plugin as any).settings ?? {};
+      const settings: Partial<KanbanSettings> =
+        (this.plugin as unknown as { settings?: Partial<KanbanSettings> }).settings ?? {};
       const shortMin = Number(settings['timer-short-break']);
       this.shortBreakMs = !isNaN(shortMin) && shortMin > 0 ? shortMin * 60 * 1000 : 5 * 60 * 1000;
     }
@@ -298,7 +312,8 @@ export class TimerManager {
       this.longBreakMs = localLongBreak * 60 * 1000;
     } else {
       // fallback to global
-      const settings: any = (this.plugin as any).settings ?? {};
+      const settings: Partial<KanbanSettings> =
+        (this.plugin as unknown as { settings?: Partial<KanbanSettings> }).settings ?? {};
       const longMin = Number(settings['timer-long-break']);
       this.longBreakMs = !isNaN(longMin) && longMin > 0 ? longMin * 60 * 1000 : 15 * 60 * 1000;
     }
@@ -307,7 +322,8 @@ export class TimerManager {
       this.longBreakInterval = localLongBreakInterval;
     } else {
       // fallback to global
-      const settings: any = (this.plugin as any).settings ?? {};
+      const settings: Partial<KanbanSettings> =
+        (this.plugin as unknown as { settings?: Partial<KanbanSettings> }).settings ?? {};
       const interval = Number(settings['timer-long-break-interval']) || 4;
       this.longBreakInterval = interval;
     }
@@ -654,7 +670,8 @@ export class TimerManager {
   }
 
   private ensureMarkdownLogs() {
-    const sms: Map<any, any> = (this.plugin as any).stateManagers;
+    const sms =
+      (this.plugin as unknown as { stateManagers?: Map<string, StateManager> }).stateManagers;
     if (!sms) return;
     if (!this.markdownParsed || sms.size !== this.lastParsedSmCount) {
       // Clear existing logs before re-parsing to prevent duplicates
@@ -666,7 +683,8 @@ export class TimerManager {
   }
 
   private parseLogsFromMarkdown() {
-    const sms: Map<any, any> = (this.plugin as any).stateManagers;
+    const sms =
+      (this.plugin as unknown as { stateManagers?: Map<string, StateManager> }).stateManagers;
     if (!sms) return;
     // Match timelog lines with optional list bullet, supporting ++, 🍅, or ⏱ markers, allowing spaces around dash variants (–, —, -)
     // 支持新的纯文本格式：++ 2024-01-15 10:00 – 10:25 (25 m)
@@ -681,7 +699,7 @@ export class TimerManager {
     }
   }
 
-  private extractItemLogsRecursive(sm: any, items: any[], lineRegex: RegExp) {
+  private extractItemLogsRecursive(sm: StateManager, items: Item[], lineRegex: RegExp) {
     if (!items) return;
     for (const it of items) {
       const lines = (it.data?.titleRaw as string)?.split(/\n/).slice(1) ?? [];
@@ -745,10 +763,10 @@ export class TimerManager {
   }
 
   /** Get the stateManager for a given card */
-  private getStateManagerForCard(cardId?: string): any | undefined {
+  private getStateManagerForCard(cardId?: string): StateManager | undefined {
     if (!cardId) return undefined;
-    if (!(this.plugin as any).stateManagers) return undefined;
-    const sms: Map<any, any> = (this.plugin as any).stateManagers;
+    const sms =
+      (this.plugin as unknown as { stateManagers?: Map<string, StateManager> }).stateManagers;
     for (const sm of sms.values()) {
       const board = sm.state;
       if (!board?.children) continue;
@@ -765,7 +783,9 @@ export class TimerManager {
     if (!cardId) return;
     // 使用纯文本格式，不使用时间选择器格式
     const line = `++ ${moment(start).format('YYYY-MM-DD')} ${moment(start).format('HH:mm')} – ${moment(end).format('HH:mm')} (${Math.round(duration / 60000)} m)`;
-    for (const sm of (this.plugin as any).stateManagers?.values?.() ?? []) {
+    const sms =
+      (this.plugin as unknown as { stateManagers?: Map<string, StateManager> }).stateManagers;
+    for (const sm of sms?.values?.() ?? []) {
       const board = sm.state;
       const updated = this.appendToBoard(sm, board, cardId, line);
       if (updated) {
@@ -775,8 +795,8 @@ export class TimerManager {
     }
   }
 
-  private appendToBoard(sm: any, board: any, cardId: string, line: string): any | null {
-    const updateItems = (items: any[]): any[] => {
+  private appendToBoard(sm: StateManager, board: Board, cardId: string, line: string): Board | null {
+    const updateItems = (items: Item[]): Item[] => {
       return items.map((it) => {
         if (it.id === cardId) {
           const newContent = it.data.titleRaw + `\n${line}`;

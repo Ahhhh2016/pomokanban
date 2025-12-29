@@ -108,24 +108,25 @@ export function getSearchValue(item: Item, stateManager: StateManager) {
 }
 
 export function getDataViewCache(app: App, linkedFile: TFile, sourceFile: TFile) {
-  if (
-    (app as any).plugins.enabledPlugins.has('dataview') &&
-    (app as any).plugins?.plugins?.dataview?.api
-  ) {
-    return (app as any).plugins.plugins.dataview.api.page(linkedFile.path, sourceFile.path);
+  const plugins = (app as unknown as {
+    plugins?: { enabledPlugins: Set<string>; plugins?: { dataview?: { api?: { page: (path: string, src: string) => unknown } } } };
+  }).plugins;
+  if (plugins?.enabledPlugins?.has('dataview') && plugins?.plugins?.dataview?.api) {
+    return plugins.plugins.dataview.api.page(linkedFile.path, sourceFile.path);
   }
+  return undefined;
 }
 
-function getPageData(obj: any, path: string) {
-  if (!obj) return null;
-  if (obj[path]) return obj[path];
+function getPageData(obj: unknown, path: string) {
+  if (!obj || typeof obj !== 'object') return null;
+  if ((obj as Record<string, unknown>)[path] !== undefined) return (obj as Record<string, unknown>)[path];
 
   const split = path.split('.');
-  let ctx = obj;
+  let ctx: unknown = obj;
 
   for (const p of split) {
-    if (typeof ctx === 'object' && p in ctx) {
-      ctx = ctx[p];
+    if (typeof ctx === 'object' && ctx !== null && p in (ctx as Record<string, unknown>)) {
+      ctx = (ctx as Record<string, unknown>)[p];
     } else {
       ctx = null;
       break;
@@ -224,7 +225,7 @@ export function getLinkedPageMetadata(
           }
         }
       } else if (Array.isArray(cacheVal)) {
-        cacheVal = cacheVal.map<any>((v, i) => {
+        cacheVal = (cacheVal as unknown[]).map((v, i) => {
           if (typeof v === 'string' && /^\[\[[^\]]+\]\]$/.test(v)) {
             const link = (cache.frontmatterLinks || []).find(
               (l) => l.key === k.metadataKey + '.' + i.toString()

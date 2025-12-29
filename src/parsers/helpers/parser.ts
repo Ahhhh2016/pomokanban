@@ -32,7 +32,9 @@ export function replaceBrs(str: string) {
 }
 
 export function indentNewLines(str: string) {
-  const useTab = ((window as any).app.vault as any).getConfig('useTab');
+  const useTab = (window as unknown as { app: { vault: { getConfig: (k: string) => unknown } } }).app.vault.getConfig(
+    'useTab'
+  );
   return str.trim().replace(/(?:\r\n|\n)/g, useTab ? '\n\t' : '\n    ');
 }
 

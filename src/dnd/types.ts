@@ -10,7 +10,7 @@ export interface NestableProps {
   accepts: string[];
 }
 
-export interface Nestable<D = any, T = any> extends NestableProps {
+export interface Nestable<D = unknown, T = unknown> extends NestableProps {
   children: T[];
   data: D;
 }
@@ -36,7 +36,7 @@ export interface EntityData {
   accepts: string[];
   acceptsSort?: string[];
   sortAxis?: Axis;
-  [k: string]: any;
+  [k: string]: unknown;
 }
 
 export interface ScopedEntityData extends EntityData {

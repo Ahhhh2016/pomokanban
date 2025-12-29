@@ -119,7 +119,7 @@ export async function applyTemplate(stateManager: StateManager, templatePath?: s
     : null;
 
   if (templateFile && templateFile instanceof TFile) {
-    const activeView = (window as any).app.workspace.getActiveViewOfType(MarkdownView);
+    const activeView = (window as unknown as { app: App }).app.workspace.getActiveViewOfType(MarkdownView);
 
     try {
       // Force the view to source mode, if needed
@@ -168,10 +168,13 @@ export async function applyTemplate(stateManager: StateManager, templatePath?: s
 }
 
 export function getDefaultDateFormat(app: App) {
-  const internalPlugins = (app as any).internalPlugins.plugins;
+  const internalPlugins = (app as unknown as { internalPlugins?: { plugins?: Record<string, any> } }).internalPlugins
+    ?.plugins as Record<string, any>;
   const dailyNotesEnabled = internalPlugins['daily-notes']?.enabled;
   const dailyNotesValue = internalPlugins['daily-notes']?.instance.options.format;
-  const nlDatesValue = (app as any).plugins.plugins['nldates-obsidian']?.settings.format;
+  const nlDatesValue = (app as unknown as { plugins?: { plugins?: Record<string, any> } }).plugins?.plugins?.[
+    'nldates-obsidian'
+  ]?.settings?.format;
   const templatesEnabled = internalPlugins.templates?.enabled;
   const templatesValue = internalPlugins.templates?.instance.options.dateFormat;
 
@@ -184,8 +187,11 @@ export function getDefaultDateFormat(app: App) {
 }
 
 export function getDefaultTimeFormat(app: App) {
-  const internalPlugins = (app as any).internalPlugins.plugins;
-  const nlDatesValue = (app as any).plugins.plugins['nldates-obsidian']?.settings.timeFormat;
+  const internalPlugins = (app as unknown as { internalPlugins?: { plugins?: Record<string, any> } }).internalPlugins
+    ?.plugins as Record<string, any>;
+  const nlDatesValue = (app as unknown as { plugins?: { plugins?: Record<string, any> } }).plugins?.plugins?.[
+    'nldates-obsidian'
+  ]?.settings?.timeFormat;
   const templatesEnabled = internalPlugins.templates?.enabled;
   const templatesValue = internalPlugins.templates?.instance.options.timeFormat;
 
@@ -200,13 +206,18 @@ export function escapeRegExpStr(str: string) {
 }
 
 export function getTemplatePlugins(app: App) {
-  const templatesPlugin = (app as any).internalPlugins.plugins.templates;
+  const templatesPlugin = (app as unknown as { internalPlugins?: { plugins?: Record<string, any> } }).internalPlugins
+    ?.plugins?.templates;
   const templatesEnabled = templatesPlugin.enabled;
-  const templaterPlugin = (app as any).plugins.plugins['templater-obsidian'];
-  const templaterEnabled = (app as any).plugins.enabledPlugins.has('templater-obsidian');
+  const templaterPlugin = (app as unknown as { plugins?: { plugins?: Record<string, any>; enabledPlugins?: Set<string> } })
+    .plugins?.plugins?.['templater-obsidian'];
+  const templaterEnabled = !!(app as unknown as { plugins?: { enabledPlugins?: Set<string> } }).plugins?.enabledPlugins?.has(
+    'templater-obsidian'
+  );
   const templaterEmptyFileTemplate =
     templaterPlugin &&
-    (this.app as any).plugins.plugins['templater-obsidian'].settings?.empty_file_template;
+    (app as unknown as { plugins?: { plugins?: Record<string, any> } }).plugins?.plugins?.['templater-obsidian']
+      ?.settings?.empty_file_template;
 
   const templateFolder = templatesEnabled
     ? templatesPlugin.instance.options.folder

@@ -1,8 +1,10 @@
 import { h, Fragment } from 'preact';
-import { Modal, Setting } from 'obsidian';
+import { App, Modal, Setting } from 'obsidian';
 import { render } from 'preact';
 import { DEFAULT_INTERRUPT_REASONS } from '../Settings';
 import { t } from '../lang/helpers';
+import KanbanPlugin from '../main';
+import { StateManager } from '../StateManager';
 
 interface StopReasonProps {
   reasons: string[];
@@ -49,7 +51,7 @@ class NewReasonPrompt extends Modal {
   private resolve: (value: string | null) => void;
   private inputEl: HTMLInputElement;
 
-  constructor(app: any, resolve: (value: string | null) => void) {
+  constructor(app: App, resolve: (value: string | null) => void) {
     super(app);
     this.resolve = resolve;
   }
@@ -98,15 +100,15 @@ class NewReasonPrompt extends Modal {
 export class StopReasonModal extends Modal {
   onSelect: (reason: string) => void;
   onCancel: () => void;
-  private plugin: any;
-  private stateManager?: any; // 添加stateManager参数
+  private plugin: KanbanPlugin;
+  private stateManager?: StateManager; // 添加stateManager参数
   /** Flag to indicate whether a reason was selected before closing */
   private _reasonSelected: boolean = false;
 
   // 本地 reasons 列表
   private _reasons: string[] = [];
 
-  constructor(plugin: any, onSelect: (reason: string) => void, onCancel: () => void, stateManager?: any) {
+  constructor(plugin: KanbanPlugin, onSelect: (reason: string) => void, onCancel: () => void, stateManager?: StateManager) {
     super(plugin.app);
     this.plugin = plugin;
     this.stateManager = stateManager;

@@ -26,12 +26,15 @@ import { TableData, TableItem } from './types';
 export const columnHelper = createColumnHelper<TableItem>();
 
 export const fuzzyAnyFilter: FilterFn<TableItem> = (row, columnId, search, addMeta) => {
-  const val = row.getValue(columnId) as any;
+  const val = row.getValue(columnId);
 
   if (val === null) return false;
 
   const stateManager = row.original.stateManager;
-  const str = val.value ? anyToString(val.value, stateManager) : anyToString(val, stateManager);
+  const str =
+    (val as any)?.value !== undefined
+      ? anyToString((val as { value: unknown }).value, stateManager)
+      : anyToString(val, stateManager);
   const itemRank = rankItem(str, search, {
     threshold: rankings.CONTAINS,
   });
@@ -39,7 +42,7 @@ export const fuzzyAnyFilter: FilterFn<TableItem> = (row, columnId, search, addMe
   return itemRank.passed;
 };
 
-export const fuzzySort: SortingFn<any> = (rowA, rowB, columnId) => {
+export const fuzzySort: SortingFn<unknown> = (rowA, rowB, columnId) => {
   if (!rowA.columnFiltersMeta[columnId] && !rowB.columnFiltersMeta[columnId]) return null;
   if (!rowA.columnFiltersMeta[columnId]) return -1;
   if (!rowB.columnFiltersMeta[columnId]) return 1;
@@ -113,7 +116,7 @@ export function useTableData(board: Board, stateManager: StateManager): TableDat
   }, [board]);
 }
 
-export const baseColumns = (sizing: Record<string, number>): ColumnDef<TableItem, any>[] => [
+export const baseColumns = (sizing: Record<string, number>): ColumnDef<TableItem, unknown>[] => [
   columnHelper.accessor((row) => row.item.data.title, {
     id: 'card',
     cell: (info) => {
@@ -177,7 +180,7 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
     stateManager
   );
 
-  const withMetadata: ColumnDef<TableItem, any>[] = useMemo(() => {
+  const withMetadata: ColumnDef<TableItem, unknown>[] = useMemo(() => {
     const columns = [...baseColumns(tableSizing)];
     for (const key of metadata) {
       switch (key) {
@@ -200,7 +203,7 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
                   );
                 },
                 sortUndefined: false,
-                sortingFn: (a, b, id) => {
+            sortingFn: (a, b, id) => {
                   const sorted = fuzzySort(a, b, id);
                   if (sorted === null) {
                     const dateA = a.getValue(id) as moment.Moment;
@@ -233,7 +236,7 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
                   return <Tags tags={tags} searchQuery={searchQuery} />;
                 },
                 sortUndefined: false,
-                sortingFn: (a, b, id) => {
+            sortingFn: (a, b, id) => {
                   const sorted = fuzzySort(a, b, id);
                   if (sorted === null) {
                     const tagsA = a.getValue<string[] | undefined>(id);
@@ -327,8 +330,8 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
             },
             sortDescFirst: false,
             sortingFn: (a, b, id) => {
-              const valA = a.getValue(id) as any;
-              const valB = b.getValue(id) as any;
+              const valA = a.getValue(id) as unknown;
+              const valB = b.getValue(id) as unknown;
 
               if (valA === null && valB === null) return 0;
               if (valA === null) return desc.current ? -1 : 1;
@@ -337,8 +340,8 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
               const sorted = fuzzySort(a, b, id);
               if (sorted === null) {
                 return defaultSort(
-                  anyToString(valA.value, stateManager),
-                  anyToString(valB.value, stateManager)
+                  anyToString((valA as any)?.value ?? valA, stateManager),
+                  anyToString((valB as any)?.value ?? valB, stateManager)
                 );
               }
               return sorted;
@@ -376,8 +379,8 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
             },
             sortDescFirst: false,
             sortingFn: (a, b, id) => {
-              const valA = a.getValue(id) as any;
-              const valB = b.getValue(id) as any;
+              const valA = a.getValue(id) as unknown;
+              const valB = b.getValue(id) as unknown;
 
               if (!valA?.value && !valB?.value) return 0;
               if (!valA?.value) return desc.current ? -1 : 1;
@@ -388,9 +391,9 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
                 if (id === 'tags') {
                   const tagSortOrder = stateManager.getSetting('tag-sort');
                   const aSortOrder =
-                    tagSortOrder?.findIndex((sort) => valA.value.includes(sort.tag)) ?? -1;
+                    tagSortOrder?.findIndex((sort) => (valA as any).value.includes(sort.tag)) ?? -1;
                   const bSortOrder =
-                    tagSortOrder?.findIndex((sort) => valB.value.includes(sort.tag)) ?? -1;
+                    tagSortOrder?.findIndex((sort) => (valB as any).value.includes(sort.tag)) ?? -1;
 
                   if (aSortOrder > -1 && bSortOrder < 0) return -1;
                   if (bSortOrder > -1 && aSortOrder < 0) return 1;
@@ -400,8 +403,8 @@ export function useTableColumns(boardData: Board, stateManager: StateManager) {
                 }
 
                 return defaultSort(
-                  anyToString(valA.value, stateManager),
-                  anyToString(valB.value, stateManager)
+                  anyToString((valA as any).value, stateManager),
+                  anyToString((valB as any).value, stateManager)
                 );
               }
               return sorted;
