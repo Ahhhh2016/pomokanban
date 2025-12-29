@@ -157,7 +157,7 @@ export class KanbanView extends TextFileView implements HoverParent {
     this.plugin.removeView(this);
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    return super.loadFile(file);
+    await super.loadFile(file);
   }
 
   async onLoadFile(file: TFile) {
@@ -277,7 +277,7 @@ export class KanbanView extends TextFileView implements HoverParent {
   }
 
   populateViewState(settings: KanbanSettings) {
-    this.viewSettings['kanban-plugin'] ??= settings['kanban-plugin'] || 'board';
+    this.viewSettings[frontmatterKey] ??= settings[frontmatterKey] || 'board';
     this.viewSettings['list-collapse'] ??= settings['list-collapse'] || [];
   }
 
