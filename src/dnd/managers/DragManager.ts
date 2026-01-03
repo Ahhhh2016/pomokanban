@@ -126,8 +126,7 @@ export class DragManager {
     this.calculateDragIntersect();
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  dragEnd(e: PointerEvent) {
+  dragEnd(_e: PointerEvent) {
     this.emitter.emit('dragEnd', this.getDragEventData());
     this.dragEntityMargin = undefined;
     this.dragEntity = undefined;
@@ -494,13 +493,15 @@ export function createHTMLDndHandlers(stateManager: StateManager) {
   );
 
   const onDrop = useCallback(
-    async (e: DragEvent) => {
-      dndManager.dragManager.dragEndHTML(
-        e,
-        stateManager.getAView().id,
-        await handleDragOrPaste(stateManager, e, activeWindow as Window & typeof globalThis),
-        false
-      );
+    (e: DragEvent) => {
+      void (async () => {
+        const content = await handleDragOrPaste(
+          stateManager,
+          e,
+          activeWindow as Window & typeof globalThis
+        );
+        dndManager.dragManager.dragEndHTML(e, stateManager.getAView().id, content, false);
+      })();
     },
     [dndManager, stateManager]
   );

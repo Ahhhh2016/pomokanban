@@ -54,47 +54,49 @@ export function useItemMenu({
         .addItem((i) => {
           i.setIcon('lucide-file-plus-2')
             .setTitle(t('New note from card'))
-            .onClick(async () => {
-              const prevTitle = item.data.titleRaw.split('\n')[0].trim();
-              const sanitizedTitle = prevTitle
-                .replace(embedRegEx, '$1')
-                .replace(wikilinkRegEx, '$1')
-                .replace(mdLinkRegEx, '$1')
-                .replace(tagRegEx, '$1')
-                .replace(illegalCharsRegEx, ' ')
-                .trim()
-                .replace(condenceWhiteSpaceRE, ' ');
+            .onClick(() => {
+              void (async () => {
+                const prevTitle = item.data.titleRaw.split('\n')[0].trim();
+                const sanitizedTitle = prevTitle
+                  .replace(embedRegEx, '$1')
+                  .replace(wikilinkRegEx, '$1')
+                  .replace(mdLinkRegEx, '$1')
+                  .replace(tagRegEx, '$1')
+                  .replace(illegalCharsRegEx, ' ')
+                  .trim()
+                  .replace(condenceWhiteSpaceRE, ' ');
 
-              const newNoteFolder = stateManager.getSetting('new-note-folder');
-              const newNoteTemplatePath = stateManager.getSetting('new-note-template');
+                const newNoteFolder = stateManager.getSetting('new-note-folder');
+                const newNoteTemplatePath = stateManager.getSetting('new-note-template');
 
-              const targetFolder = (() => {
-                if (newNoteFolder) {
-                  const maybeFolder = stateManager.app.vault.getAbstractFileByPath(
-                    newNoteFolder as string
-                  );
-                  if (maybeFolder instanceof TFolder) return maybeFolder;
-                }
-                return stateManager.app.fileManager.getNewFileParent(stateManager.file.path);
+                const targetFolder = (() => {
+                  if (newNoteFolder) {
+                    const maybeFolder = stateManager.app.vault.getAbstractFileByPath(
+                      newNoteFolder as string
+                    );
+                    if (maybeFolder instanceof TFolder) return maybeFolder;
+                  }
+                  return stateManager.app.fileManager.getNewFileParent(stateManager.file.path);
+                })();
+
+                const newFile = await stateManager.app.fileManager.createNewMarkdownFile(
+                  targetFolder,
+                  sanitizedTitle
+                );
+
+                const newLeaf = stateManager.app.workspace.getLeaf(true);
+
+                await newLeaf.openFile(newFile);
+
+                await applyTemplate(stateManager, newNoteTemplatePath as string | undefined);
+
+                const newTitleRaw = item.data.titleRaw.replace(
+                  prevTitle,
+                  stateManager.app.fileManager.generateMarkdownLink(newFile, stateManager.file.path)
+                );
+
+                boardModifiers.updateItem(path, stateManager.updateItemContent(item, newTitleRaw));
               })();
-
-              const newFile = await stateManager.app.fileManager.createNewMarkdownFile(
-                targetFolder,
-                sanitizedTitle
-              );
-
-              const newLeaf = stateManager.app.workspace.getLeaf(true);
-
-              await newLeaf.openFile(newFile);
-
-              await applyTemplate(stateManager, newNoteTemplatePath as string | undefined);
-
-              const newTitleRaw = item.data.titleRaw.replace(
-                prevTitle,
-                stateManager.app.fileManager.generateMarkdownLink(newFile, stateManager.file.path)
-              );
-
-              boardModifiers.updateItem(path, stateManager.updateItemContent(item, newTitleRaw));
             });
         })
         .addItem((i) => {

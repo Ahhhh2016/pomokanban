@@ -145,17 +145,17 @@ export default class KanbanPlugin extends Plugin {
     );
 
     this.settingsTab = new KanbanSettingsTab(this, {
-      onSettingsChange: async (newSettings) => {
+      onSettingsChange: (newSettings) => {
         this.settings = newSettings;
-        await this.saveSettings();
-
-        // Update timer durations based on new settings
-        this.timerManager?.updateSettings();
-
-        // Force a complete re-render when settings change
-        this.stateManagers.forEach((stateManager) => {
-          stateManager.forceRefresh();
-        });
+        void (async () => {
+          await this.saveSettings();
+          // Update timer durations based on new settings
+          this.timerManager?.updateSettings();
+          // Force a complete re-render when settings change
+          this.stateManagers.forEach((stateManager) => {
+            stateManager.forceRefresh();
+          });
+        })();
       },
     });
 
@@ -770,7 +770,7 @@ export default class KanbanPlugin extends Plugin {
   }
 
   registerMonkeyPatches() {
-    const self = this;
+    const getPlugin = () => this;
 
     this.app.workspace.onLayoutReady(() => {
       this.register(
@@ -792,9 +792,9 @@ export default class KanbanPlugin extends Plugin {
 
     this.register(
       this.app.workspace.on('active-leaf-change', () => {
-        const view = this.app.workspace.getActiveViewOfType(KanbanView);
+        const view = getPlugin().app.workspace.getActiveViewOfType(KanbanView);
         if (view?.activeEditor) {
-          (this.app.workspace as unknown as { activeEditor?: unknown }).activeEditor = view.activeEditor;
+          (getPlugin().app.workspace as unknown as { activeEditor?: unknown }).activeEditor = view.activeEditor;
         }
       })
     );
@@ -808,8 +808,8 @@ export default class KanbanPlugin extends Plugin {
           return function () {
             const state = this.view?.getState();
 
-            if (state?.file && self.kanbanFileModes[this.id || state.file]) {
-              delete self.kanbanFileModes[this.id || state.file];
+            if (state?.file && getPlugin().kanbanFileModes[this.id || state.file]) {
+              delete getPlugin().kanbanFileModes[this.id || state.file];
             }
 
             return next.apply(this);
@@ -820,15 +820,15 @@ export default class KanbanPlugin extends Plugin {
           return function (state: ViewState, ...rest: unknown[]) {
             if (
               // Don't force kanban mode during shutdown
-              self._loaded &&
+              getPlugin()._loaded &&
               // If we have a markdown file
               state.type === 'markdown' &&
               state.state?.file &&
               // And the current mode of the file is not set to markdown
-              self.kanbanFileModes[this.id || state.state.file] !== 'markdown'
+              getPlugin().kanbanFileModes[this.id || state.state.file] !== 'markdown'
             ) {
               // Then check for the kanban frontMatterKey
-              const cache = self.app.metadataCache.getCache(state.state.file as string);
+              const cache = getPlugin().app.metadataCache.getCache(state.state.file as string);
 
               if (cache?.frontmatter && cache.frontmatter[frontmatterKey]) {
                 // If we have it, force the view type to kanban
@@ -837,7 +837,7 @@ export default class KanbanPlugin extends Plugin {
                   type: kanbanViewType,
                 };
 
-                self.kanbanFileModes[state.state.file as string] = kanbanViewType;
+                getPlugin().kanbanFileModes[state.state.file as string] = kanbanViewType;
 
                 return next.apply(this, [newState, ...(rest as [])]);
               }

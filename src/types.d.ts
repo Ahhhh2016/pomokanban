@@ -1,4 +1,4 @@
-type HTMLAttributes<T extends EventTarget> = import('preact/compat').HTMLAttributes<T> &
+type HTMLAttributes<T extends EventTarget> = import('preact').JSX.HTMLAttributes<T> &
   AriaAttributes;
 
 declare const Fragment: import('preact').FunctionComponent<Record<string, never>>;
@@ -6,8 +6,8 @@ declare const Fragment: import('preact').FunctionComponent<Record<string, never>
 declare function h(
   type: string,
   props:
-    | (import('preact/src/jsx').JSXInternal.HTMLAttributes &
-        import('preact/src/jsx').JSXInternal.SVGAttributes &
+    | (import('preact').JSX.HTMLAttributes<any> &
+        import('preact').JSX.SVGAttributes<any> &
         Record<string, any>)
     | null,
   ...children: import('preact').ComponentChildren[]

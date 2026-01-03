@@ -754,6 +754,10 @@ button.kanban-plugin__new-item-button {
   white-space: break-spaces;
   word-break: break-word;
   overflow-wrap: anywhere;
+  /* Support sizing via CSS variables set with setCssProps */
+  width: var(--mr-width, auto);
+  height: var(--mr-height, auto);
+  min-height: var(--mr-min-height, initial);
 
   .markdown-preview-view {
     --file-margins: 0;
@@ -800,6 +804,19 @@ button.kanban-plugin__new-item-button {
       margin-block-end: var(--p-spacing);
     }
   }
+}
+
+/* Estimate Time modal error message styling */
+.kanban-plugin__estimate-time-modal .error-message {
+  color: var(--text-error);
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Hidden measurement helper */
+.kanban-plugin__measure-hidden {
+  position: absolute;
+  visibility: hidden;
 }
 
 .kanban-plugin__meta-value {

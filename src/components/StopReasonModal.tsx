@@ -141,50 +141,52 @@ export class StopReasonModal extends Modal {
   /** Prompt user for a new reason, save to settings, and return it */
   private async promptForReason(): Promise<string | null> {
     return new Promise<string | null>((resolve) => {
-      const modal = new NewReasonPrompt(this.plugin.app, async (val) => {
-        if (val) {
-          let list: string[] = [];
-          
-          if (this.stateManager) {
-            // 使用stateManager的getSetting方法获取当前设置
-            list = (this.stateManager.getSetting('timer-interrupts') as string[]) || [];
-          } else {
-            // 回退到全局设置
-            list = (this.plugin.settings['timer-interrupts'] as string[]) || [];
-          }
-          
-          // 如果列表为空，使用默认值
-          if (!list || list.length === 0) {
-            list = [...DEFAULT_INTERRUPT_REASONS];
-          }
-          
-          if (!list.includes(val)) {
-            list.push(val);
+      const modal = new NewReasonPrompt(this.plugin.app, (val) => {
+        void (async () => {
+          if (val) {
+            let list: string[] = [];
             
             if (this.stateManager) {
-              // 如果有stateManager，更新本地设置
-              const currentSettings = this.stateManager.state.data.settings || {};
-              const updatedSettings = {
-                ...currentSettings,
-                'timer-interrupts': list
-              };
-              
-              // 更新stateManager的设置
-              this.stateManager.setState({
-                ...this.stateManager.state,
-                data: {
-                  ...this.stateManager.state.data,
-                  settings: updatedSettings
-                }
-              });
+              // 使用stateManager的getSetting方法获取当前设置
+              list = (this.stateManager.getSetting('timer-interrupts') as string[]) || [];
             } else {
-              // 否则更新全局设置
-              this.plugin.settings['timer-interrupts'] = list;
-              await this.plugin.saveSettings?.();
+              // 回退到全局设置
+              list = (this.plugin.settings['timer-interrupts'] as string[]) || [];
+            }
+            
+            // 如果列表为空，使用默认值
+            if (!list || list.length === 0) {
+              list = [...DEFAULT_INTERRUPT_REASONS];
+            }
+            
+            if (!list.includes(val)) {
+              list.push(val);
+              
+              if (this.stateManager) {
+                // 如果有stateManager，更新本地设置
+                const currentSettings = this.stateManager.state.data.settings || {};
+                const updatedSettings = {
+                  ...currentSettings,
+                  'timer-interrupts': list
+                };
+                
+                // 更新stateManager的设置
+                this.stateManager.setState({
+                  ...this.stateManager.state,
+                  data: {
+                    ...this.stateManager.state.data,
+                    settings: updatedSettings
+                  }
+                });
+              } else {
+                // 否则更新全局设置
+                this.plugin.settings['timer-interrupts'] = list;
+                await this.plugin.saveSettings?.();
+              }
             }
           }
-        }
-        resolve(val);
+          resolve(val);
+        })();
       });
       modal.open();
     });
@@ -200,13 +202,15 @@ export class StopReasonModal extends Modal {
             this.onSelect(reason);
             this.close();
           }}
-          onAddReason={async () => {
-            const newReason = await this.promptForReason();
-            if (newReason) {
-              // 刷新本地 reasons 并重渲染
-              this._reasons = this.getReasons();
-              rerender();
-            }
+          onAddReason={() => {
+            void (async () => {
+              const newReason = await this.promptForReason();
+              if (newReason) {
+                // 刷新本地 reasons 并重渲染
+                this._reasons = this.getReasons();
+                rerender();
+              }
+            })();
           }}
           onClose={() => this.close()}
           onCancel={this.onCancel}

@@ -630,26 +630,28 @@ function handleFiles(stateManager: StateManager, files: FileWithPath[], isPaste?
 
       return new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = async (e) => {
-          try {
-            const vaultWithAttachments = stateManager.app.vault as unknown as {
-              getAvailablePathForAttachments: (name: string, ext: string, file: TFile) => Promise<string>;
-            };
-            const path = await vaultWithAttachments.getAvailablePathForAttachments(
-              fileName,
-              ext,
-              stateManager.file
-            );
-            const newFile = await stateManager.app.vault.createBinary(
-              path,
-              e.target.result as ArrayBuffer
-            );
+        reader.onload = (e) => {
+          void (async () => {
+            try {
+              const vaultWithAttachments = stateManager.app.vault as unknown as {
+                getAvailablePathForAttachments: (name: string, ext: string, file: TFile) => Promise<string>;
+              };
+              const path = await vaultWithAttachments.getAvailablePathForAttachments(
+                fileName,
+                ext,
+                stateManager.file
+              );
+              const newFile = await stateManager.app.vault.createBinary(
+                path,
+                e.target.result as ArrayBuffer
+              );
 
-            resolve(linkTo(stateManager, newFile, stateManager.file.path));
-          } catch (e) {
-            console.error(e);
-            reject(e);
-          }
+              resolve(linkTo(stateManager, newFile, stateManager.file.path));
+            } catch (e) {
+              console.error(e);
+              reject(e);
+            }
+          })();
         };
         reader.readAsArrayBuffer(file as FileWithPath);
       });
@@ -688,8 +690,8 @@ async function handleNullDraggable(
     const files: File[] = [];
     const items = (e as ClipboardEvent).clipboardData.items;
 
-    for (const index in items) {
-      const item = items[index];
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
       if (item.kind === 'file') {
         files.push(item.getAsFile());
       }
@@ -855,9 +857,6 @@ export function constructEstimateTimeInput({
             if (errorMsg) errorMsg.remove();
             
             const errorDiv = div.createDiv({ cls: 'error-message' });
-            errorDiv.style.color = 'var(--text-error)';
-            errorDiv.style.fontSize = '12px';
-            errorDiv.style.marginTop = '8px';
             errorDiv.textContent = t('Hours must be between 0 and 23');
             return;
           }
@@ -868,9 +867,6 @@ export function constructEstimateTimeInput({
             if (errorMsg) errorMsg.remove();
             
             const errorDiv = div.createDiv({ cls: 'error-message' });
-            errorDiv.style.color = 'var(--text-error)';
-            errorDiv.style.fontSize = '12px';
-            errorDiv.style.marginTop = '8px';
             errorDiv.textContent = t('Minutes must be between 0 and 59');
             return;
           }

@@ -15,7 +15,7 @@ import { IntersectionObserverContext, KanbanContext, SortContext } from '../cont
 import { c, useGetDateColorFn, useGetTagColorFn } from '../helpers';
 import { DateColor, TagColor } from '../types';
 
-interface MarkdownRendererProps extends HTMLAttributes<HTMLDivElement> {
+interface MarkdownRendererProps extends JSX.HTMLAttributes<HTMLDivElement> {
   className?: string;
   markdownString: string;
   searchQuery?: string;
@@ -160,11 +160,15 @@ export class BasicMarkdownRenderer extends Component {
     const { lastRefHeight, lastRefWidth, containerEl } = this;
     this.wrapperEl = el;
     if (lastRefHeight > 0) {
-      el.style.width = `${lastRefWidth}px`;
-      el.style.height = `${lastRefHeight}px`;
+      el.setCssProps({
+        '--mr-width': `${lastRefWidth}px`,
+        '--mr-height': `${lastRefHeight}px`,
+      });
       el.win.setTimeout(() => {
-        el.style.width = '';
-        el.style.height = '';
+        el.setCssProps({
+          '--mr-width': '',
+          '--mr-height': '',
+        });
       }, 50);
     }
     if (containerEl.parentElement !== el) {
@@ -178,14 +182,14 @@ export class BasicMarkdownRenderer extends Component {
     const { wrapperEl, containerEl } = this;
     if (!wrapperEl) return;
     wrapperEl.append(containerEl);
-    if (wrapperEl.style.minHeight) wrapperEl.style.minHeight = '';
+    wrapperEl.setCssProps({ '--mr-min-height': '' });
     this.isVisible = true;
   }
 
   hide() {
     const { containerEl, wrapperEl } = this;
     if (!wrapperEl) return;
-    wrapperEl.style.minHeight = this.lastRefHeight + 'px';
+    wrapperEl.setCssProps({ '--mr-min-height': this.lastRefHeight + 'px' });
     containerEl.detach();
     this.isVisible = false;
   }
@@ -397,3 +401,5 @@ export const MarkdownClonedPreviewRenderer = memo(function MarkdownClonedPreview
     />
   );
 });
+
+/* eslint-enable @typescript-eslint/ban-ts-comment */
