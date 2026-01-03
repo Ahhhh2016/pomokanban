@@ -655,10 +655,13 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
       className !== 'prevMonthDay' &&
       i % 7 === 6
     ) {
-      self.weekNumbers.insertAdjacentHTML(
-        'beforeend',
-        "<span class='flatpickr-day'>" + self.config.getWeek(date) + '</span>'
+      const weekSpan = createElement<HTMLSpanElement>(
+        win.document,
+        'span',
+        'flatpickr-day',
+        String(self.config.getWeek(date))
       );
+      self.weekNumbers.appendChild(weekSpan);
     }
 
     triggerEvent('onDayCreate', dayElement);
