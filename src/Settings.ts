@@ -388,8 +388,13 @@ export class SettingsManager {
         const [value, globalValue] = this.getSetting('lane-width', local);
 
         text.inputEl.setAttr('type', 'number');
-        text.inputEl.placeholder = `${globalValue ? globalValue : '310'} (default)`;
-        text.inputEl.value = value ? value.toString() : '';
+        const laneWidthDefault =
+          typeof globalValue === 'number' || typeof globalValue === 'string'
+            ? String(globalValue)
+            : '310';
+        text.inputEl.placeholder = `${laneWidthDefault} (default)`;
+        text.inputEl.value =
+          typeof value === 'number' || typeof value === 'string' ? String(value) : '';
 
         text.onChange((val) => {
           if (val && numberRegEx.test(val)) {
@@ -462,8 +467,13 @@ export class SettingsManager {
         const [value, globalValue] = this.getSetting('max-archive-size', local);
 
         text.inputEl.setAttr('type', 'number');
-        text.inputEl.placeholder = `${globalValue ? globalValue : '-1'} (default)`;
-        text.inputEl.value = value ? value.toString() : '';
+        const maxArchiveDefault =
+          typeof globalValue === 'number' || typeof globalValue === 'string'
+            ? String(globalValue)
+            : '-1';
+        text.inputEl.placeholder = `${maxArchiveDefault} (default)`;
+        text.inputEl.value =
+          typeof value === 'number' || typeof value === 'string' ? String(value) : '';
 
         text.onChange((val) => {
           if (val && numberRegEx.test(val)) {
@@ -1101,8 +1111,12 @@ export class SettingsManager {
       .addText((text) => {
         const [value, globalValue] = this.getSetting('archive-date-separator', local);
 
-        text.inputEl.placeholder = globalValue ? `${globalValue} (default)` : '';
-        text.inputEl.value = value ? (value as string) : '';
+        const sepPlaceholder =
+          typeof globalValue === 'string' || typeof globalValue === 'number'
+            ? `${String(globalValue)} (default)`
+            : '';
+        text.inputEl.placeholder = sepPlaceholder;
+        text.inputEl.value = typeof value === 'string' ? value : '';
 
         text.onChange((val) => {
           if (val) {
@@ -1764,7 +1778,7 @@ export class SettingsManager {
       .then((setting) => {
         const container = setting.settingEl.createDiv({ cls: 'kanban-sound-volume' });
         const label = container.createSpan({ text: 'Volume:' });
-        label.style.marginRight = '8px';
+        label.addClass('kanban-sound-volume-label');
 
         const input = container.createEl('input', { type: 'range' });
         input.min = '0';

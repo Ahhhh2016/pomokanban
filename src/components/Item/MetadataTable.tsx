@@ -144,7 +144,16 @@ export function anyToString(v: unknown, stateManager: StateManager): string {
   }
   const dv = getAPI();
   if (dv) return dv.value.toString(val);
-  return `${val as unknown as string}`;
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+  if (typeof val === 'object') {
+    try {
+      return JSON.stringify(val);
+    } catch {
+      return Object.prototype.toString.call(val as object);
+    }
+  }
+  return String(val);
 }
 
 export function pageDataToString(data: PageData, stateManager: StateManager): string {

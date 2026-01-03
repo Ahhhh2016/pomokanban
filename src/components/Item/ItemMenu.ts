@@ -134,13 +134,9 @@ export function useItemMenu({
         menu.addItem((i) => {
           i.setIcon('lucide-wrap-text')
             .setTitle(t('Split card'))
-            .onClick(async () => {
+            .onClick(() => {
               const titles = item.data.titleRaw.split(/[\r\n]+/g).map((t) => t.trim());
-              const newItems = await Promise.all(
-                titles.map((title) => {
-                  return stateManager.getNewItem(title, ' ');
-                })
-              );
+              const newItems = titles.map((title) => stateManager.getNewItem(title, ' '));
 
               boardModifiers.splitItem(path, newItems);
             });
