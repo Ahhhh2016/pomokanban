@@ -343,7 +343,7 @@ export const defaults: ParsedOptions = {
   altFormat: 'F j, Y',
   altInput: false,
   altInputClass: 'form-control input',
-  animate: typeof window === 'object' && window.navigator.userAgent.indexOf('MSIE') === -1,
+  animate: true,
   ariaDateFormat: 'F j, Y',
   autoFillDefaultTime: true,
   clickOpens: true,

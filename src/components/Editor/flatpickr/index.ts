@@ -1,11 +1,7 @@
 import English from './l10n/default';
 import { FPDate, FPHTMLCollection, FPHTMLElement, FPNodeList } from './types/globals';
+import { Platform } from 'obsidian';
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-
-/* eslint-disable no-empty */
-
-/* eslint-disable @typescript-eslint/ban-types */
 import { DayElement, FlatpickrFn, Instance } from './types/instance';
 import { CustomLocale, Locale, key as LocaleKey } from './types/locale';
 import {
@@ -41,6 +37,22 @@ import {
 import { monthToStr, tokenRegex } from './utils/formatting';
 
 const DEBOUNCED_CHANGE_MS = 300;
+
+function applyCssProps(
+  el: HTMLElement | undefined,
+  props: Record<string, string>
+): void {
+  if (!el) return;
+  const anyEl = el as any;
+  if (typeof anyEl.setCssProps === 'function') {
+    anyEl.setCssProps(props);
+  } else {
+    // Fallback for non-Obsidian environments
+    Object.keys(props).forEach((k) => {
+      (el.style as any)[k] = props[k];
+    });
+  }
+}
 
 function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Instance {
   const win = element.win || window;
@@ -111,19 +123,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
 
     setCalendarWidth();
 
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-    /* TODO: investigate this further
-
-      Currently, there is weird positioning behavior in safari causing pages
-      to scroll up. https://github.com/chmln/flatpickr/issues/563
-
-      However, most browsers are not Safari and positioning is expensive when used
-      in scale. https://github.com/chmln/flatpickr/issues/1096
-    */
-    if (!self.isMobile && isSafari) {
-      positionCalendar();
-    }
+    // Safari-specific behavior is not needed in the Obsidian environment
 
     triggerEvent('onReady');
   }
@@ -148,19 +148,21 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     } else if (config.noCalendar !== true) {
       win.requestAnimationFrame(function () {
         if (self.calendarContainer !== undefined) {
-          self.calendarContainer.style.visibility = 'hidden';
-          self.calendarContainer.style.display = 'block';
+          self.calendarContainer.classList.add('is-measuring');
         }
         if (self.daysContainer !== undefined) {
           const daysWidth = (self.days.offsetWidth + 1) * config.showMonths;
 
-          self.daysContainer.style.width = daysWidth + 'px';
+          applyCssProps(self.daysContainer, { width: daysWidth + 'px' });
 
-          self.calendarContainer.style.width =
-            daysWidth + (self.weekWrapper !== undefined ? self.weekWrapper.offsetWidth : 0) + 'px';
+          applyCssProps(self.calendarContainer, {
+            width:
+              daysWidth +
+              (self.weekWrapper !== undefined ? self.weekWrapper.offsetWidth : 0) +
+              'px',
+          });
 
-          self.calendarContainer.style.removeProperty('visibility');
-          self.calendarContainer.style.removeProperty('display');
+          self.calendarContainer.classList.remove('is-measuring');
         }
       });
     }
@@ -391,7 +393,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     const debouncedResize = debounce(onResize, 50, win);
     self._debouncedChange = debounce(triggerChange, DEBOUNCED_CHANGE_MS, win);
 
-    if (self.daysContainer && !/iPhone|iPad|iPod/i.test(navigator.userAgent))
+    if (self.daysContainer && !Platform.isMobile)
       bind(self.daysContainer, 'mouseover', (e: MouseEvent) => {
         if (self.config.mode === 'range') onMouseOver(getEventTarget(e) as DayElement);
       });
@@ -472,7 +474,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
       }
     } catch (e: any) {
       /* istanbul ignore next */
-      e.message = 'Invalid date supplied: ' + jumpTo;
+      e.message = `Invalid date supplied: ${String(jumpTo)}`;
       self.config.errorHandler(e);
     }
 
@@ -1337,7 +1339,9 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     ).forEach((k) => {
       try {
         delete self[k as keyof Instance];
-      } catch (_) {
+      }
+      // eslint-disable-next-line no-empty
+      catch (_) {
         //
       }
     });
@@ -1510,16 +1514,6 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
   }
 
   function onKeyDown(e: KeyboardEvent) {
-    // e.key                      e.keyCode
-    // "Backspace"                        8
-    // "Tab"                              9
-    // "Enter"                           13
-    // "Escape"     (IE "Esc")           27
-    // "ArrowLeft"  (IE "Left")          37
-    // "ArrowUp"    (IE "Up")            38
-    // "ArrowRight" (IE "Right")         39
-    // "ArrowDown"  (IE "Down")          40
-    // "Delete"     (IE "Del")           46
 
     const eventTarget = getEventTarget(e);
     const isInput = self.config.wrap
@@ -1529,7 +1523,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     const allowKeydown = self.isOpen && (!allowInput || !isInput);
     const allowInlineKeydown = self.config.inline && isInput && !allowInput;
 
-    if (e.keyCode === 13 && isInput) {
+    if (e.key === 'Enter' && isInput) {
       if (allowInput) {
         self.setDate(
           self._input.value,
@@ -1545,8 +1539,8 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
       const isTimeObj =
         !!self.timeContainer && self.timeContainer.contains(eventTarget as HTMLElement);
 
-      switch (e.keyCode) {
-        case 13:
+      switch (e.key) {
+        case 'Enter':
           if (isTimeObj) {
             e.preventDefault();
             updateTime();
@@ -1555,21 +1549,21 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
 
           break;
 
-        case 27: // escape
+        case 'Escape':
           e.preventDefault();
           focusAndClose();
           break;
 
-        case 8:
-        case 46:
+        case 'Backspace':
+        case 'Delete':
           if (isInput && !self.config.allowInput) {
             e.preventDefault();
             self.clear();
           }
           break;
 
-        case 37:
-        case 39:
+        case 'ArrowLeft':
+        case 'ArrowRight':
           if (!isTimeObj && !isInput) {
             e.preventDefault();
 
@@ -1578,7 +1572,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
               self.daysContainer !== undefined &&
               (allowInput === false || (activeElement && isInView(activeElement)))
             ) {
-              const delta = e.keyCode === 39 ? 1 : -1;
+              const delta = e.key === 'ArrowRight' ? 1 : -1;
 
               if (!e.ctrlKey) focusOnDay(undefined, delta);
               else {
@@ -1591,10 +1585,10 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
 
           break;
 
-        case 38:
-        case 40: {
+        case 'ArrowUp':
+        case 'ArrowDown': {
           e.preventDefault();
-          const delta = e.keyCode === 40 ? 1 : -1;
+          const delta = e.key === 'ArrowDown' ? 1 : -1;
           if (
             (self.daysContainer && (eventTarget as DayElement).$i !== undefined) ||
             eventTarget === self.input ||
@@ -1615,7 +1609,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
 
           break;
         }
-        case 9:
+        case 'Tab':
           if (isTimeObj) {
             const elems = (
               [self.hourElement, self.minuteElement, self.secondElement, self.amPM] as Node[]
@@ -1929,13 +1923,13 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     });
 
     self.isMobile =
+      Platform.isMobile &&
       !self.config.disableMobile &&
       !self.config.inline &&
       self.config.mode === 'single' &&
       !self.config.disable.length &&
       !self.config.enable &&
-      !self.config.weekNumbers &&
-      /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      !self.config.weekNumbers;
 
     for (let i = 0; i < self.config.plugins.length; i++) {
       const pluginConf = self.config.plugins[i](self) || ({} as Options);
@@ -2059,14 +2053,12 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
 
     if (self.config.static) return;
 
-    self.calendarContainer.style.top = `${top}px`;
+    applyCssProps(self.calendarContainer, { top: `${top}px` });
 
     if (!rightMost) {
-      self.calendarContainer.style.left = `${left}px`;
-      self.calendarContainer.style.right = 'auto';
+      applyCssProps(self.calendarContainer, { left: `${left}px`, right: 'auto' });
     } else if (!centerMost) {
-      self.calendarContainer.style.left = 'auto';
-      self.calendarContainer.style.right = `${right}px`;
+      applyCssProps(self.calendarContainer, { left: 'auto', right: `${right}px` });
     } else {
       const doc = getDocumentStyleSheet() as CSSStyleSheet;
       // some testing environments don't have css support
@@ -2080,8 +2072,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
       toggleClass(self.calendarContainer, 'rightMost', false);
       toggleClass(self.calendarContainer, 'centerMost', true);
       doc.insertRule(`${centerBefore},${centerAfter}${centerStyle}`, centerIndex);
-      self.calendarContainer.style.left = `${centerLeft}px`;
-      self.calendarContainer.style.right = 'auto';
+      applyCssProps(self.calendarContainer, { left: `${centerLeft}px`, right: 'auto' });
     }
   }
 
@@ -2118,15 +2109,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
   function focusAndClose() {
     self._input.focus();
 
-    if (
-      win.navigator.userAgent.indexOf('MSIE') !== -1 ||
-      (navigator as any).msMaxTouchPoints !== undefined
-    ) {
-      // hack - bugs in the way IE handles focus keeps the calendar open
-      win.setTimeout(self.close, 0);
-    } else {
-      self.close();
-    }
+    self.close();
   }
 
   function selectDate(e: MouseEvent | KeyboardEvent) {
@@ -2213,7 +2196,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     triggerChange();
   }
 
-  const CALLBACKS: { [k in keyof Options]: Function[] } = {
+  const CALLBACKS: { [k in keyof Options]: ((...args: any[]) => any)[] } = {
     locale: [setupLocale, updateWeekdays],
     showMonths: [buildMonths, setCalendarWidth, buildWeekdays],
     minDate: [jumpToDate],
@@ -2470,7 +2453,9 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     try {
       if (self.input.parentNode)
         self.input.parentNode.insertBefore(self.mobileInput, self.input.nextSibling);
-    } catch {}
+    }
+    // eslint-disable-next-line no-empty
+    catch {}
 
     bind(self.mobileInput, 'change', (e: KeyboardEvent) => {
       self.setDate((getEventTarget(e) as HTMLInputElement).value, false, self.mobileFormatStr);
@@ -2504,9 +2489,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
   }
 
   function createEvent(name: string): Event {
-    const e = win.document.createEvent('Event');
-    e.initEvent(name, true, true);
-    return e;
+    return new win.Event(name, { bubbles: true, cancelable: true });
   }
 
   function isDateSelected(date: Date) {
@@ -2622,7 +2605,9 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
       curValue = parseInt(input.value, 10),
       delta =
         (e as IncrementEvent).delta ||
-        (isKeyDown ? ((e as KeyboardEvent).which === 38 ? 1 : -1) : 0);
+        (isKeyDown
+          ? ((e as KeyboardEvent).key === 'ArrowUp' ? 1 : (e as KeyboardEvent).key === 'ArrowDown' ? -1 : 0)
+          : 0);
 
     let newValue = curValue + step * delta;
 

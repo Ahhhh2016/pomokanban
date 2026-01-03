@@ -36,7 +36,9 @@ export function getTemplateChoices(app: App, folderStr?: string) {
     folder = app.vault.getRoot();
   }
 
-  Vault.recurseChildren(folder as TFolder, (f) => {
+  const startFolder: TFolder = folder instanceof TFolder ? folder : app.vault.getRoot();
+
+  Vault.recurseChildren(startFolder, (f) => {
     if (f instanceof TFile) {
       fileList.push({
         value: f.path,

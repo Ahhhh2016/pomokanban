@@ -41,12 +41,7 @@ export function createNumberInput(
     arrowUp = createElement<HTMLSpanElement>(doc, 'span', 'arrowUp'),
     arrowDown = createElement<HTMLSpanElement>(doc, 'span', 'arrowDown');
 
-  if (navigator.userAgent.indexOf('MSIE 9.0') === -1) {
-    numInput.type = 'number';
-  } else {
-    numInput.type = 'text';
-    numInput.pattern = '\\d*';
-  }
+  numInput.type = 'number';
 
   if (opts !== undefined) for (const key in opts) numInput.setAttribute(key, opts[key]);
 

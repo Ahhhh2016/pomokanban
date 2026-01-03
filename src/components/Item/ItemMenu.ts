@@ -87,8 +87,6 @@ export function useItemMenu({
 
               await newLeaf.openFile(newFile);
 
-              stateManager.app.workspace.setActiveLeaf(newLeaf, { focus: true });
-
               await applyTemplate(stateManager, newNoteTemplatePath as string | undefined);
 
               const newTitleRaw = item.data.titleRaw.replace(

@@ -791,18 +791,11 @@ export default class KanbanPlugin extends Plugin {
     });
 
     this.register(
-      around(this.app.workspace, {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        setActiveLeaf(next) {
-          return function (...args) {
-            next.apply(this, args);
-            const view = this.getActiveViewOfType(KanbanView);
-            if (view?.activeEditor) {
-              this.activeEditor = view.activeEditor;
-            }
-          };
-        },
+      this.app.workspace.on('active-leaf-change', () => {
+        const view = this.app.workspace.getActiveViewOfType(KanbanView);
+        if (view?.activeEditor) {
+          (this.app.workspace as unknown as { activeEditor?: unknown }).activeEditor = view.activeEditor;
+        }
       })
     );
 
