@@ -207,7 +207,22 @@ export const ItemContent = memo(function ItemContent({
   useEffect(() => {
     if (editState === EditingState.complete) {
       if (titleRef.current !== null) {
-        boardModifiers.updateItem(path, stateManager.updateItemContent(item, titleRef.current));
+        // When timelog is hidden during editing, the editor value has timelog lines filtered out.
+        // Merge back existing timelog lines on save so they are preserved in markdown.
+        let contentToSave = titleRef.current;
+        if (hideTimelog) {
+          const existingLogs: string[] = item?.data?.metadata?.timelogs || [];
+          if (existingLogs.length > 0) {
+            const base = contentToSave.trimEnd();
+            // Avoid duplicating if, for any reason, the edited content already contains the same lines
+            const toAppend = existingLogs.filter((ln) => {
+              const normalized = ln.trim();
+              return normalized && !base.includes(normalized);
+            });
+            contentToSave = toAppend.length > 0 ? `${base}\n${toAppend.join('\n')}` : base;
+          }
+        }
+        boardModifiers.updateItem(path, stateManager.updateItemContent(item, contentToSave));
       }
       titleRef.current = null;
     } else if (editState === EditingState.cancel) {
