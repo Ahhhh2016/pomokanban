@@ -47,7 +47,22 @@ function confirmDatePlugin(pluginConfig: Config): Plugin {
         );
 
         confirmContainer.tabIndex = -1;
-        confirmContainer.innerHTML += config.confirmIcon;
+        if (config.confirmIcon) {
+          const iconStr = String(config.confirmIcon);
+          const isSvg = /<svg[\s>]/i.test(iconStr.trim());
+          const parser = new DOMParser();
+          if (isSvg) {
+            const svgDoc = parser.parseFromString(iconStr, 'image/svg+xml');
+            const node = svgDoc.documentElement;
+            confirmContainer.appendChild(document.importNode(node, true));
+          } else {
+            const htmlDoc = parser.parseFromString(iconStr, 'text/html');
+            const children = htmlDoc.body.childNodes;
+            for (let i = 0; i < children.length; i++) {
+              confirmContainer.appendChild(document.importNode(children[i], true));
+            }
+          }
+        }
 
         confirmContainer.addEventListener('click', fp.close);
         fp.calendarContainer.appendChild(confirmContainer);

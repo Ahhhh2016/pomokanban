@@ -856,7 +856,7 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
 
     self.monthsDropdownContainer.tabIndex = -1;
 
-    self.monthsDropdownContainer.innerHTML = '';
+    clearNode(self.monthsDropdownContainer);
 
     for (let i = 0; i < 12; i++) {
       if (!shouldBuildMonth(i)) continue;
@@ -976,10 +976,40 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
       'span',
       'flatpickr-prev-month'
     );
-    self.prevMonthNav.innerHTML = self.config.prevArrow;
+    if (self.config.prevArrow) {
+      const arrowStr = String(self.config.prevArrow);
+      const isSvg = /<svg[\s>]/i.test(arrowStr.trim());
+      const parser = new win.DOMParser();
+      if (isSvg) {
+        const svgDoc = parser.parseFromString(arrowStr, 'image/svg+xml');
+        const node = svgDoc.documentElement;
+        self.prevMonthNav.appendChild(win.document.importNode(node, true));
+      } else {
+        const htmlDoc = parser.parseFromString(arrowStr, 'text/html');
+        const children = htmlDoc.body.childNodes;
+        for (let i = 0; i < children.length; i++) {
+          self.prevMonthNav.appendChild(win.document.importNode(children[i], true));
+        }
+      }
+    }
 
     self.nextMonthNav = createElement(win.document, 'span', 'flatpickr-next-month');
-    self.nextMonthNav.innerHTML = self.config.nextArrow;
+    if (self.config.nextArrow) {
+      const arrowStr = String(self.config.nextArrow);
+      const isSvg = /<svg[\s>]/i.test(arrowStr.trim());
+      const parser = new win.DOMParser();
+      if (isSvg) {
+        const svgDoc = parser.parseFromString(arrowStr, 'image/svg+xml');
+        const node = svgDoc.documentElement;
+        self.nextMonthNav.appendChild(win.document.importNode(node, true));
+      } else {
+        const htmlDoc = parser.parseFromString(arrowStr, 'text/html');
+        const children = htmlDoc.body.childNodes;
+        for (let i = 0; i < children.length; i++) {
+          self.nextMonthNav.appendChild(win.document.importNode(children[i], true));
+        }
+      }
+    }
 
     buildMonths();
 
@@ -1145,11 +1175,12 @@ function FlatpickrInstance(element: HTMLElement, instanceConfig?: Options): Inst
     }
 
     for (let i = self.config.showMonths; i--; ) {
-      self.weekdayContainer.children[i].innerHTML = `
-      <span class='flatpickr-weekday'>
-        ${weekdays.join("</span><span class='flatpickr-weekday'>")}
-      </span>
-      `;
+      const target = self.weekdayContainer.children[i] as HTMLElement;
+      clearNode(target);
+      for (const wd of weekdays) {
+        const span = createElement<HTMLSpanElement>(win.document, 'span', 'flatpickr-weekday', wd);
+        target.appendChild(span);
+      }
     }
   }
 
