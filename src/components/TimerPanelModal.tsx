@@ -1,5 +1,4 @@
-import { h } from 'preact';
-import { App, Modal, Notice } from 'obsidian';
+import { App, Modal } from 'obsidian';
 import { render } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { TimerManager } from '../TimerManager';
@@ -18,7 +17,6 @@ function formatTime(ms: number) {
 interface Props {
   timer: TimerManager;
   boardStateManager: any; // current board's state manager (for filtering card ids)
-  onClose: () => void;
 }
 
 interface SessionBlockProps {
@@ -44,8 +42,8 @@ function SessionBlock({ session }: SessionBlockProps) {
   );
 }
 
-function TimerPanel({ timer, boardStateManager, onClose }: Props) {
-  const [tick, setTick] = useState(0);
+function TimerPanel({ timer, boardStateManager }: Props) {
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     const update = () => setTick((v) => v + 1);
@@ -113,13 +111,7 @@ function TimerPanel({ timer, boardStateManager, onClose }: Props) {
     }
   };
 
-  const switchMode = () => {
-    const newMode = isPomodoro ? 'stopwatch' : 'pomodoro';
-    if (timer.state.running) {
-      timer.stop();
-    }
-    timer.reset(newMode, timer.state.targetCardId);
-  };
+  // removed unused switchMode
 
   const targetCardId = timer.state.targetCardId;
   const rawTargetTitle = findTitleById(boardTree, targetCardId) ?? targetCardId ?? '';
@@ -180,7 +172,6 @@ export class TimerPanelModal extends Modal {
       <TimerPanel
         timer={this.timer}
         boardStateManager={this.boardStateManager}
-        onClose={() => this.close()}
       />,
       this.contentEl
     );

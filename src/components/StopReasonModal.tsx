@@ -1,4 +1,4 @@
-import { h, Fragment } from 'preact';
+import { Fragment } from 'preact';
 import { App, Modal, Setting } from 'obsidian';
 import { render } from 'preact';
 import { DEFAULT_INTERRUPT_REASONS } from '../Settings';

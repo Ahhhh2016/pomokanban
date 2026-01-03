@@ -3,7 +3,6 @@ import { useContext, useEffect, useState } from 'preact/hooks';
 import { KanbanContext } from '../context';
 import { Item } from '../types';
 import { c } from '../helpers';
-import { TimerManager } from '../../TimerManager';
 import { Icon } from '../Icon/Icon';
 
 interface TimerButtonProps {

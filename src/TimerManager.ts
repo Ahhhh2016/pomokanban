@@ -397,7 +397,6 @@ export class TimerManager {
   }
 
   reset(mode: TimerMode, cardId?: string, resetAutoRound: boolean = true) {
-    const wasRunning = this.state.running;
     this.state = {
       running: false,
       mode,

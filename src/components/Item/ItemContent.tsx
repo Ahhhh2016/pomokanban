@@ -13,7 +13,6 @@ import { StateManager } from 'src/StateManager';
 import { useNestedEntityPath } from 'src/dnd/components/Droppable';
 import { Path } from 'src/dnd/types';
 import { getTaskStatusDone, toggleTaskString } from 'src/parsers/helpers/inlineMetadata';
-import { TFile } from 'obsidian';
 
 import { MarkdownEditor, allowNewLine } from '../Editor/MarkdownEditor';
 import {
@@ -233,7 +232,7 @@ export const ItemContent = memo(function ItemContent({
   const path = useNestedEntityPath();
   const { onEditDate, onEditTime } = useDatePickers(item);
   const onEnter = useCallback(
-    (cm: EditorView, mod: boolean, shift: boolean) => {
+    (_cm: EditorView, mod: boolean, shift: boolean) => {
       if (!allowNewLine(stateManager, mod, shift)) {
         setEditState(EditingState.complete);
         return true;

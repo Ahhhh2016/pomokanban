@@ -26,7 +26,7 @@ import { PromiseQueue } from './helpers/util';
 import { t } from './lang/helpers';
 import KanbanPlugin from './main';
 import { frontmatterKey } from './parsers/common';
-import { h, Fragment } from 'preact';
+
 import { TimerPanelModal } from './components/TimerPanelModal';
 
 export const kanbanViewType = 'pomodoro-kanban';

@@ -1,5 +1,5 @@
 import update from 'immutability-helper';
-import { Menu, Platform, TFile, TFolder } from 'obsidian';
+import { Menu, Platform, TFolder } from 'obsidian';
 import { Dispatch, StateUpdater, useCallback } from 'preact/hooks';
 import { StateManager } from 'src/StateManager';
 import { Path } from 'src/dnd/types';

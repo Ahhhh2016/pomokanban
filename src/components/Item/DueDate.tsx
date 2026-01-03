@@ -1,6 +1,5 @@
 import { JSX } from 'preact/compat';
 import { StateManager } from 'src/StateManager';
-import { t } from 'src/lang/helpers';
 import { c } from '../helpers';
 import { Item } from '../types';
 

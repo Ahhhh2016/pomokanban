@@ -71,7 +71,7 @@ export function LaneTitle({ maxItems, editState, setEditState, title, onChange }
     }
   }, []);
   const onEnter = useCallback(
-    (cm: EditorView, mod: boolean, shift: boolean) => {
+    (_cm: EditorView, mod: boolean, shift: boolean) => {
       if (!allowNewLine(stateManager, mod, shift)) {
         setEditState(EditingState.complete);
         return true;

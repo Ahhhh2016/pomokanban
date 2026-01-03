@@ -295,7 +295,6 @@ export function constructMenuDueDatePickerOnChange({
   coordinates,
 }: ConstructMenuDueDatePickerOnChangeParams) {
   const dateFormat = stateManager.getSetting('date-format');
-  const timeFormat = stateManager.getSetting('time-format');
   const shouldLinkDates = stateManager.getSetting('link-date-to-daily-note');
   const dateTrigger = stateManager.getSetting('date-trigger');
   const timeTrigger = stateManager.getSetting('time-trigger');

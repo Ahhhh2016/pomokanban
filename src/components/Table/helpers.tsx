@@ -8,7 +8,7 @@ import {
   createColumnHelper,
 } from '@tanstack/react-table';
 import classcat from 'classcat';
-import { moment } from 'obsidian';
+import type { moment } from 'obsidian';
 import { useCallback, useContext, useMemo, useRef, useState } from 'preact/hooks';
 import { StateManager } from 'src/StateManager';
 import { c } from 'src/components/helpers';

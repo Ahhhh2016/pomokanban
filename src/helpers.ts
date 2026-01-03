@@ -31,7 +31,7 @@ export function gotoPrevDailyNote(app: App, file: TFile) {
   dailyNotePlugin?.gotoPreviousExisting?.(date);
 }
 
-export function buildLinkToDailyNote(app: App, dateStr: string) {
+export function buildLinkToDailyNote(_app: App, dateStr: string) {
   const dailyNoteSettings = getDailyNoteSettings();
   const shouldUseMarkdownLinks = !!(
     (window as unknown as { app: { vault: { getConfig: (k: string) => unknown } } }).app.vault.getConfig(

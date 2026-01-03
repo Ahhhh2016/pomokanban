@@ -7,8 +7,6 @@ import { useTimerMenu } from './TimerMenu';
 import { Icon } from '../Icon/Icon';
 import { c } from '../helpers';
 import { EditState, Item } from '../types';
-import { TimerManager } from '../../TimerManager';
-import { t } from 'src/lang/helpers';
 
 interface ItemTimerButtonProps {
   item: Item;
@@ -19,7 +17,7 @@ interface ItemTimerButtonProps {
 export const ItemTimerButton = Preact.memo(function ItemTimerButton({
   item,
   editState,
-  setEditState,
+  setEditState: _setEditState,
 }: ItemTimerButtonProps) {
   const { timerManager, stateManager, boardModifiers } = useContext(KanbanContext);
   const path = useNestedEntityPath();

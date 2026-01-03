@@ -34,7 +34,7 @@ export function generateInstanceId(len: number = 9): string {
 }
 
 export function maybeCompleteForMove(
-  sourceStateManager: StateManager,
+  _sourceStateManager: StateManager,
   sourceBoard: Board,
   sourcePath: Path,
   destinationStateManager: StateManager,

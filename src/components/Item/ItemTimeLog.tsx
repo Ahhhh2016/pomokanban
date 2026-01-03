@@ -1,6 +1,5 @@
 import { moment } from 'obsidian';
-import Preact, { JSX, memo, useContext, useEffect, useState } from 'preact/compat';
-import React from 'preact/compat';
+import { memo, useContext, useEffect, useState } from 'preact/compat';
 import { KanbanContext } from '../context';
 import { c } from '../helpers';
 

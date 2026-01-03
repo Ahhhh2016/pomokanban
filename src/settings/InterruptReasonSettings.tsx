@@ -1,6 +1,6 @@
 import classcat from 'classcat';
 import update from 'immutability-helper';
-import { h } from 'preact';
+
 import { JSX, createPortal, render, unmountComponentAtNode } from 'preact/compat';
 import { Dispatch, StateUpdater, useContext, useEffect, useRef, useState } from 'preact/hooks';
 

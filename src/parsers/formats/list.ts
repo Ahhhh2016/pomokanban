@@ -78,7 +78,7 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
   visit(
     item,
     ['text', 'wikilink', 'embedWikilink', 'image', 'inlineCode', 'code', 'hashtag'],
-    (node: Content & { value?: string; alt?: string; type: string }, i, parent) => {
+    (node: Content & { value?: string; alt?: string; type: string }, _i, parent) => {
       if (node.type === 'hashtag') {
         const firstChild = (parent as Parent)?.children?.[0] as Partial<{ value?: string }> | undefined;
         const firstValue = firstChild?.value;
@@ -124,7 +124,7 @@ export function listItemToItemData(stateManager: StateManager, md: string, item:
     (node) => {
       return node.type !== 'paragraph';
     },
-    (node, i, parent) => {
+    (node, _i, parent) => {
       const genericNode = node as ValueNode;
 
       if (genericNode.type === 'blockid') {
