@@ -97,7 +97,8 @@ function TimerPanel({ timer, boardStateManager }: Props) {
   const todayLogs = timer
     .getLogsForDate()
     .filter((s) => s.cardId && boardCardIds.has(s.cardId));
-  const totalMs = todayLogs.reduce((sum, s) => sum + s.duration, 0);
+  // Exclude breaks from today's focused total
+  const totalMs = todayLogs.filter((s) => s.mode !== 'break').reduce((sum, s) => sum + s.duration, 0);
   const totalMin = Math.floor(totalMs / 60000);
   const pomodoroCount = todayLogs.filter((s) => s.mode === 'pomodoro').length;
   const totalStr = totalMin >= 60 ? `${Math.floor(totalMin / 60)}h ${totalMin % 60}m` : `${totalMin}m`;

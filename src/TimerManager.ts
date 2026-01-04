@@ -530,21 +530,24 @@ export class TimerManager {
     const finalizeSession = () => {
       const end = Date.now();
       const duration = end - this.currentSessionStart;
-      this.logs.push({
-        cardId: this.state.targetCardId,
-        cardTitle: this.getCardTitle(this.state.targetCardId),
-        mode: this.state.mode,
-        start: this.currentSessionStart,
-        end,
-        duration,
-      });
-      this.appendSessionToMarkdown(
-        this.state.targetCardId,
-        this.currentSessionStart,
-        end,
-        duration
-      );
-      this.emitter.emit('log');
+      // Do not record break sessions into logs or markdown
+      if (this.state.mode !== 'break') {
+        this.logs.push({
+          cardId: this.state.targetCardId,
+          cardTitle: this.getCardTitle(this.state.targetCardId),
+          mode: this.state.mode,
+          start: this.currentSessionStart,
+          end,
+          duration,
+        });
+        this.appendSessionToMarkdown(
+          this.state.targetCardId,
+          this.currentSessionStart,
+          end,
+          duration
+        );
+        this.emitter.emit('log');
+      }
 
       // Don't reset auto round counter when finalizing sessions in auto mode
       const shouldResetAutoRound = this.autoRounds === 0;
@@ -588,17 +591,19 @@ export class TimerManager {
       // 切换到新的卡片：记录之前卡片的日志，然后继续
       const now = Date.now();
       const duration = now - this.currentSessionStart;
-      // 记录前一段 session
-      this.logs.push({
-        cardId: this.state.targetCardId,
-        cardTitle: this.getCardTitle(this.state.targetCardId),
-        mode: this.state.mode,
-        start: this.currentSessionStart,
-        end: now,
-        duration,
-      });
-      this.appendSessionToMarkdown(this.state.targetCardId, this.currentSessionStart, now, duration);
-      this.emitter.emit('log');
+      // 记录前一段 session（排除休息时间）
+      if (this.state.mode !== 'break') {
+        this.logs.push({
+          cardId: this.state.targetCardId,
+          cardTitle: this.getCardTitle(this.state.targetCardId),
+          mode: this.state.mode,
+          start: this.currentSessionStart,
+          end: now,
+          duration,
+        });
+        this.appendSessionToMarkdown(this.state.targetCardId, this.currentSessionStart, now, duration);
+        this.emitter.emit('log');
+      }
 
       // 切换目标卡片并重置当前 session 起点
       this.state.targetCardId = cardId;
@@ -649,7 +654,7 @@ export class TimerManager {
     this.ensureMarkdownLogs();
     if (!cardId) return 0;
     return this.logs
-      .filter((l) => l.cardId === cardId)
+      .filter((l) => l.cardId === cardId && l.mode !== 'break')
       .reduce((sum, l) => sum + l.duration, 0);
   }
 
